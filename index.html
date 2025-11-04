@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de OS - Agoora Hub</title>
+    
+    <!-- Bibliotecas para Geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- INÍCIO DO CSS EMBUTIDO -->
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --border-color: #ddd;
+            --background-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --error-color: #d9534f;
+            --success-color: #28a745;
+            --highlight-color: #ffc107;
+            --font-family: Arial, sans-serif;
+            --skeleton-bg: #e0e0e0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        header nav button {
+            background: none;
+            border: 1px solid transparent;
+            color: white;
+            padding: 8px 12px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        header nav button.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        .is-hidden {
+            display: none !important;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* --- Telas Principais --- */
+        .os-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .os-card-header {
+             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .os-card h3 { margin: 0; }
+        .os-card p { margin: 5px 0 0; color: #555; }
+        .os-card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .view-details-btn, .view-agenda-btn, .edit-os-btn { background-color: var(--secondary-color); }
+
+        /* --- Tela de Detalhes da OS --- */
+        .details-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; }
+        #back-to-dashboard-btn, #back-to-ativos-panel-btn, #back-to-crm-panel-btn { margin-bottom: 0; background-color: var(--secondary-color); }
+        #ativo-search-input { width: calc(100% - 22px); padding: 10px; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 5px; }
+        input[type="datetime-local"], input[type="date"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; box-sizing: border-box; }
+        .date-time-inputs { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .date-time-inputs label { flex: 1; min-width: 200px; }
+        #ativo-suggestions { border: 1px solid var(--border-color); border-top: none; max-height: 150px; overflow-y: auto; background-color: white; position: relative; width: 100%; box-sizing: border-box; }
+        #ativo-suggestions div { padding: 10px; cursor: pointer; }
+        #ativo-suggestions div:hover { background-color: #f0f0f0; }
+        .error-message { color: var(--error-color); margin-top: 10px; font-weight: bold; }
+        
+        /* Estilos para Ativos Alocados Agrupados */
+        .classification-group-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 2rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        #alocados-list > .classification-group-title:first-child {
+            margin-top: 0;
+        }
+        .alocado-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .alocado-item.last-in-group { border-bottom: none; }
+        .alocado-item .info .ativo-name { font-weight: bold; }
+        .alocado-item .info .periodo { font-size: 0.9em; color: #555; }
+        .alocado-item-actions { display: flex; gap: 0.5rem; }
+        .alocado-item-actions button { padding: 5px 8px; font-size: 0.8rem; }
+        .remove-btn { background-color: var(--error-color); }
+
+        .billing-type-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; }
+        
+        /* --- Resumo Financeiro --- */
+        #financial-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            align-items: center;
+        }
+        .financial-item {
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .financial-item strong {
+            display: block;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+        }
+        .financial-item span {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        #os-final-total-value {
+             color: var(--success-color);
+        }
+
+        .actions-footer { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: right; }
+        #save-os-btn.pending-changes { background-color: var(--highlight-color); color: #333; font-weight: bold; }
+        #save-status { text-align: right; margin-right: auto; }
+        #save-status.success { color: var(--success-color); }
+        #save-status.error { color: var(--error-color); }
+
+        /* --- Painel de Ativos / CRM --- */
+        .filters-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .item-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+        .ativo-card, .crm-card { border: 3px solid var(--border-color); transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 5px; padding: 1rem; background-color: var(--card-bg); cursor: pointer; }
+        .ativo-card-header, .crm-card-header { display: block; }
+        .item-card-title { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;}
+        .ativo-card-header p, .crm-card-header p { font-size: 0.9em; color: #555; margin: 0.5rem 0 0 0;}
+        .item-tag { font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; color: white; }
+        .ativo-valores { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .valor-badge { font-size: 0.9rem; padding: 5px 10px; border-radius: 5px; background-color: #e9ecef; }
+        
+        /* --- Telas de Detalhes --- */
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .detail-item { background-color: #f9f9f9; padding: 10px; border-radius: 5px; overflow-wrap: break-word; }
+        .detail-item strong { display: block; color: var(--secondary-color); font-size: 0.9em; margin-bottom: 5px; }
+
+        /* --- Calendário de Ativos --- */
+        .schedule-container { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
+        .calendar { text-align: center; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .calendar-header button { background-color: var(--secondary-color); padding: 5px 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day, .calendar-day-name { padding: 10px; border-radius: 4px; }
+        .calendar-day-name { font-weight: bold; }
+        .calendar-day { background-color: #f9f9f9; color: #aaa; }
+        .calendar-day.in-month { background-color: var(--card-bg); color: #333; }
+        .calendar-day.allocated { background-color: var(--highlight-color); color: white; font-weight: bold; position: relative; cursor: pointer; }
+        
+        /* --- Skeleton Loading --- */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .skeleton { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; background-color: var(--skeleton-bg); border-radius: 4px; }
+        .skeleton-text { height: 1.2em; margin-bottom: 0.5rem; }
+        .skeleton-p { height: 1em; width: 75%; margin-top: 0.5rem; }
+        .skeleton-button { width: 100px; height: 36px; }
+        .os-card.skeleton .os-card-header div:first-child { flex: 1; }
+        .ativo-card.skeleton, .crm-card.skeleton { height: 120px; border-color: var(--skeleton-bg); cursor: default; }
+
+        /* --- Modals --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
+        .modal-close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2rem; color: #333; cursor: pointer; }
+        .modal-body .form-group { margin-bottom: 1rem; }
+        .modal-body .form-group:last-child { margin-bottom: 0; }
+        .modal-body .booking-item { padding: 10px; border-bottom: 1px solid var(--border-color); }
+        .modal-body .booking-item:last-child { border-bottom: none; }
+        .modal-body .booking-item span { font-weight: bold; color: var(--primary-color); }
+        #os-name-input, #os-modal-discount-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; box-sizing: border-box; }
+        .modal-footer { text-align: right; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; }
+        .modal-footer button { margin-left: 0.5rem; }
+        .modal-cancel-btn { background-color: var(--secondary-color); }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #e9ecef;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+    </style>
+    <!-- FIM DO CSS EMBUTIDO -->
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <button id="nav-os-btn" class="active">Painel de OS</button>
+            <button id="nav-ativos-btn">Painel de Ativos</button>
+            <button id="nav-crm-btn">CRM</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 1: PAINEL DE OS -->
+        <div id="dashboard-view">
+            <div class="actions">
+                <button id="create-new-os-btn">Criar Nova Ordem de Serviço</button>
+            </div>
+            <h2>Ordens de Serviço Atuais</h2>
+            <div id="os-list" class="os-list-container"></div>
+        </div>
+
+        <!-- TELA 2: DETALHES DA OS -->
+        <div id="details-view" class="is-hidden">
+            <div class="details-header">
+                <button id="back-to-dashboard-btn">&leftarrow; Voltar ao Painel de OS</button>
+                <h2 id="os-details-title"></h2>
+                <button id="edit-os-details-btn">Editar OS</button>
+            </div>
+
+            <!-- INÍCIO: Card de Informações do CRM -->
+            <div id="crm-details-panel" class="card is-hidden">
+                <h3>Informações do Cliente</h3>
+                <div id="crm-info-container" class="detail-grid"></div>
+            </div>
+            <!-- FIM: Card de Informações do CRM -->
+
+            <div class="card">
+                <h3>Adicionar Novo Ativo</h3>
+                <div id="add-ativo-form">
+                    <input type="text" id="ativo-search-input" placeholder="Buscar Ativo por nome..." autocomplete="off">
+                    <div id="ativo-suggestions"></div>
+                    
+                    <div class="billing-type-selector">
+                        <strong>Faturar por:</strong>
+                        <label><input type="radio" name="billing-type" value="hora" checked> Hora</label>
+                        <label><input type="radio" name="billing-type" value="diaria"> Diária</label>
+                    </div>
+
+                    <div id="date-inputs-hora" class="date-time-inputs">
+                        <label>Início: <input type="datetime-local" id="start-time-input"></label>
+                        <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                    </div>
+
+                    <div id="date-inputs-diaria" class="date-time-inputs is-hidden">
+                        <label>Data de Início: <input type="date" id="start-date-input"></label>
+                        <label>Data de Fim: <input type="date" id="end-date-input"></label>
+                    </div>
+
+                    <button id="add-ativo-btn">Adicionar Ativo à OS</button>
+                    <p id="error-message" class="error-message"></p>
+                </div>
+            </div>
+
+            <h3>Ativos Alocados</h3>
+            <div id="alocados-list" class="card"></div>
+
+            <!-- INÍCIO: Resumo Financeiro -->
+            <div id="financial-summary-panel" class="card">
+                <h3>Resumo Financeiro</h3>
+                <div id="financial-details-grid">
+                    <div class="financial-item">
+                        <strong>Valor Bruto</strong>
+                        <span id="os-gross-value">R$ 0,00</span>
+                    </div>
+                    <div class="financial-item">
+                        <strong>Valor de Desconto</strong>
+                        <span id="os-discount-value">R$ 0,00</span>
+                    </div>
+                    <div class="financial-item">
+                        <strong>Valor Total da OS</strong>
+                        <span id="os-final-total-value">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+            <!-- FIM: Resumo Financeiro -->
+
+            <div class="actions-footer">
+                <p id="save-status"></p>
+                <button id="generate-pdf-btn" style="background-color: var(--secondary-color);">Gerar PDF</button>
+                <button id="save-os-btn" disabled>Salvar Históricos no Notion</button>
+            </div>
+        </div>
+
+        <!-- TELA 3: PAINEL DE ATIVOS -->
+        <div id="ativos-view" class="is-hidden">
+            <h2>Painel de Ativos</h2>
+            <div class="card filters-container" id="ativos-filters">
+                <input type="text" id="ativo-name-filter" placeholder="Filtrar por nome...">
+                <select id="ativo-type-filter"></select>
+                <select id="ativo-classification-filter"></select>
+            </div>
+            <div id="ativos-list" class="item-list-container"></div>
+        </div>
+
+        <!-- TELA 4: DETALHES DO ATIVO -->
+        <div id="ativo-details-view" class="is-hidden">
+             <button id="back-to-ativos-panel-btn">&leftarrow; Voltar ao Painel de Ativos</button>
+             <div class="card">
+                <h2 id="ativo-detail-title"></h2>
+                <div id="ativo-detail-info" class="detail-grid"></div>
+             </div>
+             <div class="card">
+                <h3>Agenda do Ativo</h3>
+                <div id="ativo-detail-schedule"></div>
+             </div>
+        </div>
+
+        <!-- TELA 5: PAINEL DE CRM (NOVA) -->
+        <div id="crm-view" class="is-hidden">
+            <h2>Painel de CRM</h2>
+            <div class="card filters-container">
+                <input type="text" id="crm-name-filter" placeholder="Filtrar por nome...">
+                <input type="text" id="crm-doc-filter" placeholder="Filtrar por CPF/CNPJ...">
+                <select id="crm-classification-filter"></select>
+            </div>
+            <div id="crm-list" class="item-list-container"></div>
+        </div>
+        
+        <!-- TELA 6: DETALHES DO CRM (NOVA) -->
+        <div id="crm-details-view" class="is-hidden">
+            <button id="back-to-crm-panel-btn">&leftarrow; Voltar ao Painel de CRM</button>
+            <div class="card">
+                <div class="details-header">
+                    <h2 id="crm-detail-title"></h2>
+                    <button id="open-notion-crm-btn">Abrir no Notion</button>
+                </div>
+                <div id="crm-detail-info" class="detail-grid"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DETALHES DO DIA -->
+    <div id="day-details-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="day-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="modal-title">Agendamentos do Dia</h3>
+            <div class="modal-body" id="modal-body-day-details"></div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA CRIAR/EDITAR OS -->
+    <div id="os-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="os-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="os-modal-title"></h3>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="os-name-input">Nome da Ordem de Serviço:</label>
+                    <input type="text" id="os-name-input" placeholder="Ex: OS-28 - Evento Corporativo">
+                </div>
+                <div class="form-group">
+                    <label for="os-modal-discount-input">Valor de Desconto:</label>
+                    <input type="text" id="os-modal-discount-input" placeholder="R$ 0,00">
+                </div>
+                <p id="os-modal-error" class="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="os-modal-cancel-btn" class="modal-cancel-btn">Cancelar</button>
+                <button id="os-modal-save-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA EDITAR HISTÓRICO -->
+    <div id="historico-edit-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="historico-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="historico-modal-title">Editar Alocação</h3>
+            <div class="modal-body">
+                <p><strong>Ativo:</strong> <span id="historico-modal-ativo-name"></span></p>
+                <div class="billing-type-selector">
+                    <strong>Faturar por:</strong>
+                    <label><input type="radio" name="edit-billing-type" value="hora"> Hora</label>
+                    <label><input type="radio" name="edit-billing-type" value="diaria"> Diária</label>
+                </div>
+                <div id="edit-date-inputs-hora" class="date-time-inputs">
+                    <label>Início: <input type="datetime-local" id="edit-start-time-input"></label>
+                    <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                </div>
+                <div id="edit-date-inputs-diaria" class="date-time-inputs is-hidden">
+                    <label>Data de Início: <input type="date" id="edit-start-date-input"></label>
+                    <label>Data de Fim: <input type="date" id="edit-end-date-input"></label>
+                </div>
+                <p id="historico-modal-error" class="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="historico-modal-cancel-btn" class="modal-cancel-btn">Cancelar</button>
+                <button id="historico-modal-save-btn">Salvar Alteração</button>
+            </div>
+        </div>
+    </div>
+
+
+    <footer>
+        <!-- AJUSTAR A VERSÃO DO SISTEMA AQUI -->
+        <p id="system-version">v2.26.0</p>
+    </footer>
+
+
+    <!-- INÍCIO DO JAVASCRIPT EMBUTIDO -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DADOS DA APLICAÇÃO ---
+            let dataOS = []; 
+            let dataAtivos = [];
+            let dataHistoricos = [];
+            let dataCRM = [];
+            let tipoCores = {};
+            let classificacaoCores = {};
+
+            // --- ESTADO E ELEMENTOS DO DOM ---
+            let currentOSId = null;
+            let currentAtivoId = null;
+            let currentCrmId = null;
+            let selectedAtivoId = null;
+            let currentBillingType = 'hora';
+            let osEditContext = null; 
+            let historicoEditContext = null;
+            let ativoFilters = { name: '', type: 'all', classification: 'all' };
+            let crmFilters = { name: '', doc: '', classification: 'all' };
+            
+            let historicosParaCriar = [];
+            let historicosParaApagar = [];
+            let historicosParaAtualizar = [];
+
+            const mainViews = { dashboard: document.getElementById('dashboard-view'), details: document.getElementById('details-view'), ativos: document.getElementById('ativos-view'), ativoDetails: document.getElementById('ativo-details-view'), crm: document.getElementById('crm-view'), crmDetails: document.getElementById('crm-details-view') };
+            const navButtons = { os: document.getElementById('nav-os-btn'), ativos: document.getElementById('nav-ativos-btn'), crm: document.getElementById('nav-crm-btn') };
+            
+            // --- Modals
+            const dayDetailsModal = document.getElementById('day-details-modal');
+            const dayModalCloseBtn = document.getElementById('day-modal-close-btn');
+            
+            const osModal = document.getElementById('os-modal');
+            const osModalTitle = document.getElementById('os-modal-title');
+            const osModalCloseBtn = document.getElementById('os-modal-close-btn');
+            const osModalCancelBtn = document.getElementById('os-modal-cancel-btn');
+            const osModalSaveBtn = document.getElementById('os-modal-save-btn');
+            const osNameInput = document.getElementById('os-name-input');
+            const osModalDiscountInput = document.getElementById('os-modal-discount-input');
+            const osModalError = document.getElementById('os-modal-error');
+
+            const historicoEditModal = document.getElementById('historico-edit-modal');
+            const historicoModalCloseBtn = document.getElementById('historico-modal-close-btn');
+            const historicoModalCancelBtn = document.getElementById('historico-modal-cancel-btn');
+
+
+            const osListContainer = document.getElementById('os-list');
+            const backBtn = document.getElementById('back-to-dashboard-btn');
+            const createOSBtn = document.getElementById('create-new-os-btn');
+            const editOSDetailsBtn = document.getElementById('edit-os-details-btn');
+            const addAtivoBtn = document.getElementById('add-ativo-btn');
+            const searchInput = document.getElementById('ativo-search-input');
+            const suggestionsContainer = document.getElementById('ativo-suggestions');
+            const errorMessage = document.getElementById('error-message');
+            const billingTypeRadios = document.querySelectorAll('input[name="billing-type"]');
+            const saveOSBtn = document.getElementById('save-os-btn');
+            const saveStatus = document.getElementById('save-status');
+            const generatePdfBtn = document.getElementById('generate-pdf-btn');
+
+            // --- DOM do Painel de Ativos
+            const ativosListContainer = document.getElementById('ativos-list');
+            const ativoNameFilter = document.getElementById('ativo-name-filter');
+            const ativoTypeFilter = document.getElementById('ativo-type-filter');
+            const ativoClassificationFilter = document.getElementById('ativo-classification-filter');
+            const backToAtivosPanelBtn = document.getElementById('back-to-ativos-panel-btn');
+
+            // --- DOM do Painel de CRM
+            const crmListContainer = document.getElementById('crm-list');
+            const crmNameFilter = document.getElementById('crm-name-filter');
+            const crmDocFilter = document.getElementById('crm-doc-filter');
+            const crmClassificationFilter = document.getElementById('crm-classification-filter');
+            const backToCrmPanelBtn = document.getElementById('back-to-crm-panel-btn');
+
+
+            // --- FUNÇÕES UTILITÁRIAS ---
+            const formatCurrency = (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const formatDate = (date) => date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            const formatDateOnly = (date) => date.toLocaleDateString('pt-BR', { dateStyle: 'short' });
+            const formatTime = (date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const generateRandomColor = () => { const h = Math.floor(Math.random() * 360); return `hsl(${h}, 70%, 50%)`; };
+            const toLocalISOString = (date) => { const tzoffset = (new Date()).getTimezoneOffset() * 60000; return (new Date(date - tzoffset)).toISOString().slice(0, -1); };
+            const parseCurrency = (value) => Number(value.replace(/\D/g, '')) / 100;
+
+            // --- LÓGICA DE NEGÓCIO E ESTADO ---
+            const updateSaveButtonState = () => {
+                const hasPendingChanges = historicosParaCriar.length > 0 || historicosParaApagar.length > 0 || historicosParaAtualizar.length > 0;
+                saveOSBtn.disabled = !hasPendingChanges;
+                saveOSBtn.classList.toggle('pending-changes', hasPendingChanges);
+                 if (!hasPendingChanges) { saveStatus.textContent = ''; }
+            };
+
+            const calculateGrossValue = (osId) => {
+                const historicosAtuais = dataHistoricos.filter(h => h.ID_OS_Vinculada === osId && !historicosParaApagar.some(del => del.ID_Historico_Web === h.ID_Historico_Web));
+                const historicosNovos = historicosParaCriar.filter(h => h.ID_OS_Vinculada === osId);
+                const historicosAtualizados = historicosParaAtualizar.filter(h => h.ID_OS_Vinculada === osId);
+                const idsAtualizados = historicosAtualizados.map(h => h.ID_Historico_Web);
+                const historicosFiltrados = historicosAtuais.filter(h => !idsAtualizados.includes(h.ID_Historico_Web));
+                return [...historicosFiltrados, ...historicosNovos, ...historicosAtualizados].reduce((total, h) => total + (h.Valor_Calculado || 0), 0);
+            };
+
+            const checkAvailability = (ativoId, startTime, endTime, excludeHistoricoId = null) => {
+                const newStart = new Date(startTime);
+                const newEnd = new Date(endTime);
+                for (const historico of dataHistoricos) {
+                    if (historico.ID_Historico_Web === excludeHistoricoId) continue;
+                    if (historico.ID_Ativo === ativoId) {
+                        const existingStart = new Date(historico.Inicio_Historico);
+                        const existingEnd = new Date(historico.Fim_Historico);
+                        if (newStart < existingEnd && newEnd > existingStart) return false;
+                    }
+                }
+                return true;
+            };
+            
+            // --- RENDERIZAÇÃO ---
+            const updateFinancialSummary = () => {
+                if (!currentOSId) return;
+                const os = dataOS.find(o => o.ID_OS === currentOSId);
+                const grossValue = calculateGrossValue(currentOSId);
+                const discountValue = os ? (os.Desconto_OS || 0) : 0;
+                const finalTotal = grossValue - discountValue;
+
+                document.getElementById('os-gross-value').textContent = formatCurrency(grossValue);
+                document.getElementById('os-discount-value').textContent = formatCurrency(discountValue);
+                document.getElementById('os-final-total-value').textContent = formatCurrency(finalTotal);
+            };
+
+            const renderDashboard = () => {
+                osListContainer.innerHTML = '';
+                dataOS.forEach(os => {
+                    const totalValue = dataHistoricos.filter(h => h.ID_OS_Vinculada === os.ID_OS).reduce((total, h) => total + (h.Valor_Calculado || 0), 0);
+                    
+                    let crmInfoHtml = '<p><em>Nenhum CRM foi vinculado</em></p>';
+                    if (os.ID_CRM && os.ID_CRM !== 'SEM CRM') {
+                        const crm = dataCRM.find(c => c.ID_CRM_Notion === os.ID_CRM);
+                        if (crm) {
+                            crmInfoHtml = `<p><strong>Cliente:</strong> ${crm.Nome_CRM}</p>`;
+                        }
+                    }
+
+                    const osCard = document.createElement('div');
+                    osCard.className = 'os-card';
+                    osCard.innerHTML = `
+                        <div class="os-card-header">
+                            <div>
+                                <h3>${os.Nome_OS}</h3>
+                                ${crmInfoHtml}
+                                <p><strong>Valor Bruto: ${formatCurrency(totalValue)}</strong></p>
+                            </div>
+                            <div class="os-card-actions">
+                                <button class="edit-os-btn" data-os-id="${os.ID_OS}">Editar</button>
+                                <button class="view-details-btn" data-os-id="${os.ID_OS}">Ver Detalhes</button>
+                            </div>
+                        </div>`;
+                    osListContainer.appendChild(osCard);
+                });
+                document.querySelectorAll('.view-details-btn').forEach(button => button.addEventListener('click', (e) => showDetailsView(e.target.dataset.osId)));
+                document.querySelectorAll('.edit-os-btn').forEach(button => button.addEventListener('click', (e) => showOSModal('update', e.target.dataset.osId)));
+            };
+
+            const renderDetails = () => {
+                if (!currentOSId) return;
+                const os = dataOS.find(o => o.ID_OS === currentOSId);
+                document.getElementById('os-details-title').textContent = os ? `Detalhes da ${os.Nome_OS}`: 'Nova Ordem de Serviço';
+                
+                const crmPanel = document.getElementById('crm-details-panel');
+                const crmInfoContainer = document.getElementById('crm-info-container');
+                crmInfoContainer.innerHTML = '';
+                if (os && os.ID_CRM && os.ID_CRM !== 'SEM CRM') {
+                    const crm = dataCRM.find(c => c.ID_CRM_Notion === os.ID_CRM);
+                    if (crm) {
+                        crmInfoContainer.innerHTML = `
+                            <div class="detail-item"><strong>Nome</strong> ${crm.Nome_CRM || 'N/D'}</div>
+                            <div class="detail-item"><strong>Telefone</strong> ${crm.Telefone || 'N/D'}</div>
+                            <div class="detail-item"><strong>E-mail</strong> ${crm.Email || 'N/D'}</div>
+                            <div class="detail-item"><strong>CPF/CNPJ</strong> ${crm['CPF-CNPJ'] || 'N/D'}</div>
+                            <div class="detail-item"><strong>Site</strong> ${crm.Site || 'N/D'}</div>
+                            <div class="detail-item" style="grid-column: 1 / -1;"><strong>Endereço</strong> ${crm.Endereco_Completo || 'Nenhum endereço fornecido.'}</div>
+                        `;
+                        crmPanel.classList.remove('is-hidden');
+                    } else {
+                        crmPanel.classList.add('is-hidden');
+                    }
+                } else {
+                    crmPanel.classList.add('is-hidden');
+                }
+
+                const alocadosList = document.getElementById('alocados-list');
+                alocadosList.innerHTML = '';
+                const idsApagados = historicosParaApagar.map(h => h.ID_Historico_Web);
+                const idsAtualizados = historicosParaAtualizar.map(h => h.ID_Historico_Web);
+                const historicosBase = dataHistoricos.filter(h => !idsApagados.includes(h.ID_Historico_Web) && !idsAtualizados.includes(h.ID_Historico_Web));
+                const historicosVisiveis = [...historicosBase, ...historicosParaCriar, ...historicosParaAtualizar].filter(h => h.ID_OS_Vinculada === currentOSId);
+                
+                if (historicosVisiveis.length === 0) {
+                    alocadosList.innerHTML = '<p>Nenhum ativo alocado nesta OS.</p>';
+                } else {
+                    const groupedByClassification = historicosVisiveis.reduce((acc, historico) => {
+                        const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                        const classification = (ativo && ativo.Classificacao) ? ativo.Classificacao : 'Sem Classificação';
+                        if (!acc[classification]) acc[classification] = [];
+                        acc[classification].push(historico);
+                        return acc;
+                    }, {});
+
+                    const sortedClassifications = Object.keys(groupedByClassification).sort((a, b) => {
+                        const order = { 'Local': 1, 'Profissional': 2 };
+                        const aOrder = order[a] || 3, bOrder = order[b] || 3;
+                        if (aOrder !== bOrder) return aOrder - bOrder;
+                        return a.localeCompare(b);
+                    });
+
+                    sortedClassifications.forEach(classification => {
+                        const groupTitle = document.createElement('h4');
+                        groupTitle.className = 'classification-group-title';
+                        groupTitle.textContent = classification;
+                        alocadosList.appendChild(groupTitle);
+
+                        const historicosDoGrupo = groupedByClassification[classification];
+                        historicosDoGrupo.forEach((historico, index) => {
+                            const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                            if (!ativo) return;
+                            const start = new Date(historico.Inicio_Historico), end = new Date(historico.Fim_Historico);
+                            let periodoHtml = (historico.Tipo_Faturamento === 'hora')
+                                ? `De: ${formatDate(start)} até ${formatDate(end)} (${historico.Duracao_Faturada.toFixed(1)} horas)`
+                                : `De: ${formatDateOnly(start)} até ${formatDateOnly(end)} (${historico.Duracao_Faturada} diárias)`;
+                            
+                            const item = document.createElement('div');
+                            item.className = 'alocado-item';
+                            if (index === historicosDoGrupo.length - 1) item.classList.add('last-in-group');
+                            item.innerHTML = `<div class="info"><p class="ativo-name">${ativo.Nome_Ativo}</p><p class="periodo">${periodoHtml}</p><p>Custo: ${formatCurrency(historico.Valor_Calculado)}</p></div><div class="alocado-item-actions"><button class="edit-btn" data-historico-id="${historico.ID_Historico_Web}">Editar</button><button class="remove-btn" data-historico-id="${historico.ID_Historico_Web}">Remover</button></div>`;
+                            alocadosList.appendChild(item);
+                        });
+                    });
+                }
+                document.querySelectorAll('.remove-btn').forEach(button => button.addEventListener('click', handleRemoveHistorico));
+                document.querySelectorAll('.edit-btn').forEach(button => button.addEventListener('click', (e) => showHistoricoEditModal(e.target.dataset.historicoId)));
+                updateSaveButtonState();
+                updateFinancialSummary(); 
+            };
+
+            const renderAtivosPanel = () => {
+                const tiposUnicos = ['all', ...new Set(dataAtivos.map(a => a.Tipo).filter(Boolean))];
+                const classificacoesUnicas = ['all', ...new Set(dataAtivos.map(a => a.Classificacao).filter(Boolean))];
+                
+                tiposUnicos.forEach(tipo => { if (tipo !== 'all' && !tipoCores[tipo]) { tipoCores[tipo] = generateRandomColor(); } });
+
+                ativoTypeFilter.innerHTML = tiposUnicos.map(tipo => `<option value="${tipo}">${tipo === 'all' ? 'Todos os Tipos' : tipo}</option>`).join('');
+                ativoTypeFilter.value = ativoFilters.type;
+
+                ativoClassificationFilter.innerHTML = classificacoesUnicas.map(c => `<option value="${c}">${c === 'all' ? 'Todas as Classificações' : c}</option>`).join('');
+                ativoClassificationFilter.value = ativoFilters.classification;
+                
+                const nomeQuery = ativoNameFilter.value.toLowerCase();
+                const filteredAtivos = dataAtivos.filter(ativo => {
+                    const matchNome = !nomeQuery || ativo.Nome_Ativo.toLowerCase().includes(nomeQuery);
+                    const matchTipo = ativoFilters.type === 'all' || ativo.Tipo === ativoFilters.type;
+                    const matchClassificacao = ativoFilters.classification === 'all' || ativo.Classificacao === ativoFilters.classification;
+                    return matchNome && matchTipo && matchClassificacao;
+                });
+
+                ativosListContainer.innerHTML = '';
+                filteredAtivos.forEach(ativo => {
+                    const temValorZerado = ativo['Valor Hora'] === 0 || ativo['Valor Diária'] === 0;
+                    const card = document.createElement('div');
+                    card.className = 'ativo-card';
+                    card.dataset.ativoId = ativo.ID_Ativo;
+                    
+                    if (temValorZerado) { card.style.borderColor = 'var(--error-color)'; } else if (ativo.Tipo && tipoCores[ativo.Tipo]) { card.style.borderColor = tipoCores[ativo.Tipo]; }
+                    
+                    const valorHora = (ativo['Valor Hora'] || ativo['Valor Hora'] === 0) ? formatCurrency(ativo['Valor Hora']) : 'N/D';
+                    const valorDiaria = (ativo['Valor Diária'] || ativo['Valor Diária'] === 0) ? formatCurrency(ativo['Valor Diária']) : 'N/D';
+
+                    card.innerHTML = `<div class="ativo-card-header"><div class="item-card-title"><h3>${ativo.Nome_Ativo}</h3><span class="item-tag" style="background-color: ${tipoCores[ativo.Tipo] || '#ccc'}">${ativo.Tipo || 'Sem Tipo'}</span></div><p><strong>Classificação:</strong> ${ativo.Classificacao || 'N/D'}</p><div class="ativo-valores"><span class="valor-badge">Hora: ${valorHora}</span><span class="valor-badge">Diária: ${valorDiaria}</span></div></div>`;
+                    ativosListContainer.appendChild(card);
+                });
+
+                document.querySelectorAll('.ativo-card').forEach(card => card.addEventListener('click', (e) => showAtivoDetailsView(e.currentTarget.dataset.ativoId)));
+            };
+
+            const renderAtivoDetails = () => {
+                if(!currentAtivoId) return;
+                const ativo = dataAtivos.find(a => a.ID_Ativo === currentAtivoId);
+                if (!ativo) return;
+
+                document.getElementById('ativo-detail-title').textContent = ativo.Nome_Ativo;
+                document.getElementById('ativo-detail-info').innerHTML = `<div class="detail-item"><strong>Classificação</strong> ${ativo.Classificacao || 'N/D'}</div><div class="detail-item"><strong>Situação</strong> ${ativo.Situação || 'N/D'}</div><div class="detail-item"><strong>Tipo</strong> ${ativo.Tipo || 'N/D'}</div><div class="detail-item"><strong>Valor Hora</strong> ${formatCurrency(ativo['Valor Hora'])}</div><div class="detail-item"><strong>Valor Diária</strong> ${formatCurrency(ativo['Valor Diária'])}</div><div class="detail-item" style="grid-column: 1 / -1;"><strong>Descrição</strong> ${ativo['Descrição'] || 'Nenhuma descrição fornecida.'}</div>`;
+
+                const scheduleContainer = document.getElementById('ativo-detail-schedule');
+                const initialDate = new Date();
+                scheduleContainer.innerHTML = generateCalendarHTML(currentAtivoId, initialDate.getFullYear(), initialDate.getMonth());
+                scheduleContainer.querySelector('.prev-month').addEventListener('click', () => updateCalendar(currentAtivoId, -1, scheduleContainer));
+                scheduleContainer.querySelector('.next-month').addEventListener('click', () => updateCalendar(currentAtivoId, 1, container));
+                scheduleContainer.querySelector('.calendar-grid').addEventListener('click', handleDayClick);
+            };
+
+            const renderCRMPanel = () => {
+                const classificacoesUnicas = ['all', ...new Set(dataCRM.map(c => c.Classificacao).filter(Boolean))];
+                
+                classificacoesUnicas.forEach(c => {
+                    if (c !== 'all' && !classificacaoCores[c]) {
+                        classificacaoCores[c] = generateRandomColor();
+                    }
+                });
+
+                crmClassificationFilter.innerHTML = classificacoesUnicas.map(c => `<option value="${c}">${c === 'all' ? 'Todas as Classificações' : c}</option>`).join('');
+                crmClassificationFilter.value = crmFilters.classification;
+                
+                const nomeQuery = crmNameFilter.value.toLowerCase();
+                const docQuery = crmDocFilter.value.toLowerCase();
+
+                const filteredCRM = dataCRM.filter(crm => {
+                    const matchNome = !nomeQuery || crm.Nome_CRM.toLowerCase().includes(nomeQuery);
+                    const matchDoc = !docQuery || (crm['CPF-CNPJ'] && crm['CPF-CNPJ'].toLowerCase().includes(docQuery));
+                    const matchClassificacao = crmFilters.classification === 'all' || crm.Classificacao === crmFilters.classification;
+                    return matchNome && matchDoc && matchClassificacao;
+                });
+
+                crmListContainer.innerHTML = '';
+                filteredCRM.forEach(crm => {
+                    const card = document.createElement('div');
+                    card.className = 'crm-card';
+                    card.dataset.crmId = crm.ID_CRM_Notion;
+                    
+                    card.innerHTML = `
+                        <div class="crm-card-header">
+                            <div class="item-card-title">
+                                <h3>${crm.Nome_CRM}</h3>
+                                <span class="item-tag" style="background-color: ${classificacaoCores[crm.Classificacao] || '#ccc'}">${crm.Classificacao || 'N/D'}</span>
+                            </div>
+                            <p>${crm.Telefone || 'Sem telefone'}</p>
+                            <p>${crm.Email || 'Sem e-mail'}</p>
+                        </div>`;
+                    crmListContainer.appendChild(card);
+                });
+
+                document.querySelectorAll('.crm-card').forEach(card => card.addEventListener('click', (e) => showCRMDetailsView(e.currentTarget.dataset.crmId)));
+            };
+
+            const renderCRMDetails = () => {
+                if(!currentCrmId) return;
+                const crm = dataCRM.find(c => c.ID_CRM_Notion === currentCrmId);
+                if (!crm) return;
+
+                document.getElementById('crm-detail-title').textContent = crm.Nome_CRM;
+                document.getElementById('open-notion-crm-btn').onclick = () => window.open(crm.URL_Notion, '_blank');
+
+                const infoContainer = document.getElementById('crm-detail-info');
+                infoContainer.innerHTML = `
+                    <div class="detail-item"><strong>Classificação</strong> ${crm.Classificacao || 'N/D'}</div>
+                    <div class="detail-item"><strong>Status</strong> ${crm.Status || 'N/D'}</div>
+                    <div class="detail-item"><strong>Telefone</strong> ${crm.Telefone || 'N/D'}</div>
+                    <div class="detail-item"><strong>E-mail</strong> ${crm.Email || 'N/D'}</div>
+                    <div class="detail-item"><strong>CPF/CNPJ</strong> ${crm['CPF-CNPJ'] || 'N/D'}</div>
+                    <div class="detail-item"><strong>Site</strong> ${crm.Site || 'N/D'}</div>
+                    <div class="detail-item" style="grid-column: 1 / -1;"><strong>Endereço</strong> ${crm.Endereco_Completo || 'Nenhum endereço fornecido.'}</div>
+                `;
+            };
+            
+            // --- LÓGICA DO CALENDÁRIO ---
+            const generateCalendarHTML = (ativoId, year, month) => {
+                const historicosDoAtivo = dataHistoricos.filter(h => h.ID_Ativo === ativoId);
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
+                let html = `<div class="calendar" data-year="${year}" data-month="${month}" data-ativo-id="${ativoId}"><div class="calendar-header"><button class="prev-month">&lt;</button><h4>${monthNames[month]} ${year}</h4><button class="next-month">&gt;</button></div><div class="calendar-grid">`;
+                daysOfWeek.forEach(day => html += `<div class="calendar-day-name">${day}</div>`);
+                for (let i = 0; i < firstDay.getDay(); i++) { html += `<div class="calendar-day"></div>`; }
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const currentDayStart = new Date(year, month, day, 0, 0, 0, 0);
+                    const currentDayEnd = new Date(year, month, day, 23, 59, 59, 999);
+                    const isAllocated = historicosDoAtivo.some(h => new Date(h.Inicio_Historico) <= currentDayEnd && new Date(h.Fim_Historico) >= currentDayStart);
+                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    html += `<div class="calendar-day in-month ${isAllocated ? 'allocated' : ''}" ${isAllocated ? `data-date="${dateString}"` : ''}>${day}</div>`;
+                }
+                html += `</div></div>`;
+                return html;
+            };
+            
+            const updateCalendar = (ativoId, monthOffset, container) => {
+                const calendarDiv = container.querySelector('.calendar');
+                const year = parseInt(calendarDiv.dataset.year), month = parseInt(calendarDiv.dataset.month);
+                const newDate = new Date(year, month + monthOffset, 1);
+                container.innerHTML = generateCalendarHTML(ativoId, newDate.getFullYear(), newDate.getMonth());
+                container.querySelector('.prev-month').addEventListener('click', () => updateCalendar(ativoId, -1, container));
+                container.querySelector('.next-month').addEventListener('click', () => updateCalendar(ativoId, 1, container));
+                container.querySelector('.calendar-grid').addEventListener('click', handleDayClick);
+            };
+
+            const handleDayClick = (event) => {
+                const dayElement = event.target.closest('.allocated');
+                if (!dayElement) return;
+                const calendarElement = event.target.closest('.calendar');
+                const ativoId = calendarElement.dataset.ativoId;
+                const dateString = dayElement.dataset.date;
+                showDayDetailsModal(ativoId, dateString);
+            };
+            
+            // --- LÓGICA DOS MODALS ---
+            const showDayDetailsModal = (ativoId, dateString) => {
+                const [year, month, day] = dateString.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+                document.getElementById('modal-title').textContent = `Agendamentos para ${date.toLocaleDateString('pt-BR')}`;
+                const dayStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+                const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+                const bookings = dataHistoricos.filter(h => h.ID_Ativo === ativoId && new Date(h.Inicio_Historico) <= dayEnd && new Date(h.Fim_Historico) >= dayStart).sort((a,b) => new Date(a.Inicio_Historico) - new Date(b.Inicio_Historico));
+                const modalBody = document.getElementById('modal-body-day-details');
+                modalBody.innerHTML = '';
+                if(bookings.length > 0) {
+                    bookings.forEach(booking => {
+                        const os = dataOS.find(o => o.ID_OS === booking.ID_OS_Vinculada);
+                        const start = new Date(booking.Inicio_Historico);
+                        const end = new Date(booking.Fim_Historico);
+                        modalBody.innerHTML += `<div class="booking-item">
+                            <p><strong>OS:</strong> ${os ? os.Nome_OS : 'Desconhecida'}</p>
+                            <p><strong>Horário:</strong> <span>${formatTime(start)} - ${formatTime(end)}</span></p>
+                        </div>`;
+                    });
+                }
+                dayDetailsModal.classList.remove('is-hidden');
+            };
+
+            const hideDayDetailsModal = () => dayDetailsModal.classList.add('is-hidden');
+            
+            const showOSModal = (mode, osId = null) => {
+                const os = dataOS.find(o => o.ID_OS === osId);
+                osEditContext = { mode, id: osId, os: os };
+                osModalTitle.textContent = mode === 'create' ? 'Criar Nova Ordem de Serviço' : 'Editar Ordem de Serviço';
+                osNameInput.value = os ? os.Nome_OS : '';
+                const discountValue = os ? (os.Desconto_OS || 0) : 0;
+                osModalDiscountInput.value = discountValue > 0 ? formatCurrency(discountValue) : '';
+                
+                osModalError.textContent = '';
+                osModal.classList.remove('is-hidden');
+                osNameInput.focus();
+            };
+
+            const hideOSModal = () => { osEditContext = null; osModal.classList.add('is-hidden'); };
+
+            const showHistoricoEditModal = (historicoId) => {
+                const historico = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar].find(h => h.ID_Historico_Web === historicoId);
+                if (!historico) return;
+                historicoEditContext = historico;
+                
+                const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                document.getElementById('historico-modal-ativo-name').textContent = ativo ? ativo.Nome_Ativo : 'Desconhecido';
+                
+                const radios = document.querySelectorAll('input[name="edit-billing-type"]');
+                radios.forEach(r => r.checked = r.value === historico.Tipo_Faturamento);
+                
+                const inputsHora = document.getElementById('edit-date-inputs-hora');
+                const inputsDiaria = document.getElementById('edit-date-inputs-diaria');
+                inputsHora.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'hora');
+                inputsDiaria.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'diaria');
+
+                if (historico.Tipo_Faturamento === 'hora') {
+                    document.getElementById('edit-start-time-input').value = toLocalISOString(new Date(historico.Inicio_Historico)).substring(0, 16);
+                    document.getElementById('edit-end-time-input').value = toLocalISOString(new Date(historico.Fim_Historico)).substring(0, 16);
+                } else {
+                    document.getElementById('edit-start-date-input').value = historico.Inicio_Historico.substring(0, 10);
+                    document.getElementById('edit-end-date-input').value = historico.Fim_Historico.substring(0, 10);
+                }
+                
+                document.getElementById('historico-modal-error').textContent = '';
+                historicoEditModal.classList.remove('is-hidden');
+            };
+
+            const hideHistoricoEditModal = () => { historicoEditContext = null; historicoEditModal.classList.add('is-hidden'); };
+
+            // --- NAVEGAÇÃO ENTRE TELAS ---
+            const switchView = (viewToShow) => { Object.values(mainViews).forEach(view => view.classList.add('is-hidden')); mainViews[viewToShow].classList.remove('is-hidden'); Object.values(navButtons).forEach(btn => btn.classList.remove('active')); if (viewToShow === 'dashboard' || viewToShow === 'details') navButtons.os.classList.add('active'); if (viewToShow === 'ativos' || viewToShow === 'ativoDetails') navButtons.ativos.classList.add('active'); if (viewToShow === 'crm' || viewToShow === 'crmDetails') navButtons.crm.classList.add('active');};
+            const showDashboard = () => { switchView('dashboard'); renderDashboard(); };
+            const showDetailsView = (osId) => {
+                currentOSId = osId;
+                historicosParaCriar = [];
+                historicosParaApagar = [];
+                historicosParaAtualizar = [];
+                switchView('details');
+                renderDetails();
+            };
+            const showAtivosView = () => { currentAtivoId = null; switchView('ativos'); renderAtivosPanel(); };
+            const showAtivoDetailsView = (ativoId) => { currentAtivoId = ativoId; switchView('ativoDetails'); renderAtivoDetails(); };
+            const showCRMView = () => { currentCrmId = null; switchView('crm'); renderCRMPanel(); };
+            const showCRMDetailsView = (crmId) => { currentCrmId = crmId; switchView('crmDetails'); renderCRMDetails(); };
+            
+            // --- EVENT LISTENERS ---
+            billingTypeRadios.forEach(radio => radio.addEventListener('change', (e) => {
+                currentBillingType = e.target.value;
+                document.getElementById('date-inputs-hora').classList.toggle('is-hidden', currentBillingType !== 'hora');
+                document.getElementById('date-inputs-diaria').classList.toggle('is-hidden', currentBillingType !== 'diaria');
+            }));
+            
+            const handleRemoveHistorico = (event) => {
+                const historicoId = event.target.dataset.historicoId;
+                let index = historicosParaCriar.findIndex(h => h.ID_Historico_Web === historicoId);
+                if (index > -1) {
+                    historicosParaCriar.splice(index, 1);
+                } else {
+                    index = historicosParaAtualizar.findIndex(h => h.ID_Historico_Web === historicoId);
+                    if (index > -1) {
+                        historicosParaAtualizar.splice(index, 1);
+                    }
+                    const historicoOriginal = dataHistoricos.find(h => h.ID_Historico_Web === historicoId);
+                    if (historicoOriginal) {
+                        historicosParaApagar.push(historicoOriginal);
+                    }
+                }
+                renderDetails();
+            };
+            
+            osModalDiscountInput.addEventListener('input', (e) => {
+                const rawValue = e.target.value.replace(/\D/g, '');
+                e.target.value = formatCurrency(Number(rawValue) / 100);
+            });
+
+            navButtons.os.addEventListener('click', showDashboard);
+            navButtons.ativos.addEventListener('click', showAtivosView);
+            navButtons.crm.addEventListener('click', showCRMView);
+            backBtn.addEventListener('click', showDashboard);
+            backToAtivosPanelBtn.addEventListener('click', showAtivosView);
+            document.getElementById('back-to-crm-panel-btn').addEventListener('click', showCRMView);
+            editOSDetailsBtn.addEventListener('click', () => showOSModal('update', currentOSId));
+
+            dayModalCloseBtn.addEventListener('click', hideDayDetailsModal);
+            dayDetailsModal.addEventListener('click', (e) => { if(e.target === dayDetailsModal) hideDayDetailsModal(); }); 
+            osModalCloseBtn.addEventListener('click', hideOSModal);
+            osModalCancelBtn.addEventListener('click', hideOSModal);
+            osModal.addEventListener('click', (e) => { if(e.target === osModal) hideOSModal(); }); 
+            historicoModalCloseBtn.addEventListener('click', hideHistoricoEditModal);
+            historicoModalCancelBtn.addEventListener('click', hideHistoricoEditModal);
+            
+            const handleSaveOS = async (payload) => {
+                osModalSaveBtn.disabled = true;
+                osModalSaveBtn.textContent = 'A salvar...';
+                const mode = osEditContext.mode; 
+                try {
+                    const response = await fetch('https://work.produ-cloud.com/webhook/agora-hub-altera_os', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('Falha ao salvar a OS.');
+                    hideOSModal();
+                    await fetchAllData();
+                    if (mode === 'update') {
+                       renderDetails();
+                    } else {
+                       showDashboard();
+                    }
+                } catch (error) {
+                    console.error("Erro ao salvar OS:", error);
+                    osModalError.textContent = "Não foi possível salvar. Tente novamente.";
+                } finally {
+                    osModalSaveBtn.disabled = false;
+                    osModalSaveBtn.textContent = 'Salvar';
+                }
+            };
+            
+            osModalSaveBtn.addEventListener('click', () => {
+                const newName = osNameInput.value.trim();
+                const newDiscount = parseCurrency(osModalDiscountInput.value);
+                if (!newName) { osModalError.textContent = "O nome não pode estar em branco."; return; }
+
+                if (osEditContext.mode === 'create') {
+                    handleSaveOS([{ acao: "create", Nome_OS: newName, Valor_Desconto: newDiscount }]);
+                } else if (osEditContext.mode === 'update') {
+                    const originalOS = osEditContext.os;
+                    if (newName === originalOS.Nome_OS && newDiscount === (originalOS.Desconto_OS || 0)) {
+                        hideOSModal();
+                        return; 
+                    }
+                    handleSaveOS([{ acao: "update", ID_OS: osEditContext.id, Nome_OS: newName, Valor_Desconto: newDiscount }]);
+                }
+            });
+
+            createOSBtn.addEventListener('click', () => showOSModal('create'));
+            
+            addAtivoBtn.addEventListener('click', () => {
+                errorMessage.textContent = '';
+                if (!selectedAtivoId) { errorMessage.textContent = "Por favor, selecione um ativo."; return; }
+                const ativo = dataAtivos.find(a => a.ID_Ativo === selectedAtivoId);
+                let start, end, duracao, valor, valorCalculado, inicioISO, fimISO;
+                if (currentBillingType === 'hora') {
+                    start = document.getElementById('start-time-input').value; end = document.getElementById('end-time-input').value;
+                    if (!start || !end) { errorMessage.textContent = "Preencha as datas e horas de início e fim."; return; }
+                    const startDate = new Date(start); const endDate = new Date(end);
+                    if (startDate >= endDate) { errorMessage.textContent = "A data de fim deve ser posterior à de início."; return; }
+                    valor = ativo['Valor Hora'];
+                    if (valor === null || valor === undefined) { errorMessage.textContent = "Este ativo não possui 'Valor Hora' definido."; return; }
+                    duracao = ((endDate - startDate) / 36e5); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                } else { 
+                    start = document.getElementById('start-date-input').value; end = document.getElementById('end-date-input').value;
+                    if (!start || !end) { errorMessage.textContent = "Preencha as datas de início e fim."; return; }
+                    const startDate = new Date(start + 'T00:00:00-03:00'); const endDate = new Date(end + 'T23:59:59-03:00');
+                    if (startDate > endDate) { errorMessage.textContent = "A data de fim deve ser igual ou posterior à de início."; return; }
+                    valor = ativo['Valor Diária'];
+                    if (valor === null || valor === undefined) { errorMessage.textContent = "Este ativo não possui 'Valor Diária' definido."; return; }
+                    duracao = ((endDate - startDate) / 864e5) + 1; duracao = Math.round(duracao); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                }
+                if (!checkAvailability(selectedAtivoId, inicioISO, fimISO)) { errorMessage.textContent = "Erro: Ativo já alocado neste período."; return; }
+                historicosParaCriar.push({ ID_Historico_Web: 'hist-' + Date.now(), ID_Ativo: selectedAtivoId, ID_OS_Vinculada: currentOSId, Inicio_Historico: inicioISO, Fim_Historico: fimISO, Tipo_Faturamento: currentBillingType, Valor_Calculado: valorCalculado, Duracao_Faturada: duracao });
+                searchInput.value = ''; selectedAtivoId = null; document.getElementById('start-time-input').value = ''; document.getElementById('end-time-input').value = ''; document.getElementById('start-date-input').value = ''; document.getElementById('end-date-input').value = ''; suggestionsContainer.innerHTML = '';
+                renderDetails();
+            });
+            
+            saveOSBtn.addEventListener('click', async () => {
+                saveStatus.textContent = 'A salvar alterações...'; saveStatus.className = ''; saveOSBtn.disabled = true;
+                
+                const mapToPayload = (h) => ({
+                    ID_Notion_Registro: h.ID_Notion_Registro || null,
+                    ID_Historico_Web: h.ID_Historico_Web,
+                    ID_Ativo_Texto: h.ID_Ativo,
+                    ID_OS_Texto: h.ID_OS_Vinculada,
+                    Periodo_Alocacao: { start: h.Inicio_Historico, end: h.Fim_Historico },
+                    Tipo_Faturamento: h.Tipo_Faturamento,
+                    Valor_Calculado: h.Valor_Calculado,
+                    Duracao_Faturada: h.Duracao_Faturada
+                });
+
+                const payload = [
+                    ...historicosParaCriar.map(h => ({ acao: "create", ...mapToPayload(h) })),
+                    ...historicosParaApagar.map(h => ({ acao: "delete", ...mapToPayload(h) })),
+                    ...historicosParaAtualizar.map(h => ({ acao: "update", ...mapToPayload(h) }))
+                ];
+
+                if (payload.length === 0) {
+                    saveOSBtn.disabled = false;
+                    return;
+                }
+
+                try {
+                    const response = await fetch('https://work.produ-cloud.com/webhook/agoora-hub-atualiza_historico', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) { throw new Error(`Erro do servidor: ${response.statusText}`); }
+                    saveStatus.textContent = 'Alterações salvas com sucesso!'; saveStatus.className = 'success';
+                    
+                    await fetchAllData();
+                    historicosParaCriar = [];
+                    historicosParaApagar = [];
+                    historicosParaAtualizar = [];
+
+                } catch (error) {
+                    console.error("Erro ao salvar:", error);
+                    saveStatus.textContent = 'Falha ao salvar. Tente novamente.'; saveStatus.className = 'error';
+                } finally {
+                   renderDetails();
+                }
+            });
+
+            document.getElementById('historico-modal-save-btn').addEventListener('click', () => {
+                const errorEl = document.getElementById('historico-modal-error');
+                errorEl.textContent = '';
+                const billingType = document.querySelector('input[name="edit-billing-type"]:checked').value;
+                const ativo = dataAtivos.find(a => a.ID_Ativo === historicoEditContext.ID_Ativo);
+                let start, end, duracao, valor, valorCalculado, inicioISO, fimISO;
+
+                if (billingType === 'hora') {
+                    start = document.getElementById('edit-start-time-input').value; end = document.getElementById('edit-end-time-input').value;
+                    if (!start || !end) { errorEl.textContent = "Preencha início e fim."; return; }
+                    const startDate = new Date(start); const endDate = new Date(end);
+                    if (startDate >= endDate) { errorEl.textContent = "Fim deve ser posterior ao início."; return; }
+                    valor = ativo['Valor Hora'];
+                    if (valor === null || valor === undefined) { errorEl.textContent = "Este ativo não possui 'Valor Hora'."; return; }
+                    duracao = (endDate - startDate) / 36e5; valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                } else {
+                    start = document.getElementById('edit-start-date-input').value; end = document.getElementById('edit-end-date-input').value;
+                    if (!start || !end) { errorEl.textContent = "Preencha as datas de início e fim."; return; }
+                    const startDate = new Date(start + 'T00:00:00-03:00'); const endDate = new Date(end + 'T23:59:59-03:00');
+                    if (startDate > endDate) { errorEl.textContent = "Fim deve ser igual ou posterior ao início."; return; }
+                    valor = ativo['Valor Diária'];
+                    if (valor === null || valor === undefined) { errorEl.textContent = "Este ativo não possui 'Valor Diária'."; return; }
+                    duracao = ((endDate - startDate) / 864e5) + 1; duracao = Math.round(duracao); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                }
+                if (!checkAvailability(ativo.ID_Ativo, inicioISO, fimISO, historicoEditContext.ID_Historico_Web)) { errorEl.textContent = "Conflito de agendamento detectado."; return; }
+                
+                const updatedHistorico = { ...historicoEditContext, Inicio_Historico: inicioISO, Fim_Historico: fimISO, Tipo_Faturamento: billingType, Valor_Calculado: valorCalculado, Duracao_Faturada: duracao };
+
+                const indexCriar = historicosParaCriar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
+                if(indexCriar > -1) {
+                    historicosParaCriar[indexCriar] = updatedHistorico;
+                } else {
+                    const indexAtualizar = historicosParaAtualizar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
+                    if (indexAtualizar > -1) {
+                        historicosParaAtualizar[indexAtualizar] = updatedHistorico;
+                    } else {
+                        historicosParaAtualizar.push(updatedHistorico);
+                    }
+                }
+                
+                hideHistoricoEditModal();
+                renderDetails();
+            });
+
+            searchInput.addEventListener('input', () => { 
+                const query = searchInput.value.toLowerCase(); 
+                suggestionsContainer.innerHTML = ''; 
+                if (!query) { 
+                    selectedAtivoId = null; 
+                    return; 
+                } 
+                dataAtivos
+                    .filter(a => a.Nome_Ativo.toLowerCase().includes(query) && a.Situação === '01 - Ativo')
+                    .forEach(a => { 
+                        const div = document.createElement('div'); 
+                        div.textContent = a.Nome_Ativo; 
+                        div.addEventListener('click', () => { 
+                            searchInput.value = a.Nome_Ativo; 
+                            selectedAtivoId = a.ID_Ativo; 
+                            suggestionsContainer.innerHTML = ''; 
+                        }); 
+                        suggestionsContainer.appendChild(div); 
+                    }); 
+            });
+            
+            ativoNameFilter.addEventListener('input', (e) => { ativoFilters.name = e.target.value; renderAtivosPanel(); });
+            ativoTypeFilter.addEventListener('change', (e) => { ativoFilters.type = e.target.value; renderAtivosPanel(); });
+            ativoClassificationFilter.addEventListener('change', (e) => { ativoFilters.classification = e.target.value; renderAtivosPanel(); });
+            
+            crmNameFilter.addEventListener('input', (e) => { crmFilters.name = e.target.value; renderCRMPanel(); });
+            crmDocFilter.addEventListener('input', (e) => { crmFilters.doc = e.target.value; renderCRMPanel(); });
+            crmClassificationFilter.addEventListener('change', (e) => { crmFilters.classification = e.target.value; renderCRMPanel(); });
+            
+            // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+            async function fetchAllData() {
+                try {
+                    const fetchOS = fetch('https://work.produ-cloud.com/webhook/agoora-hub-carrega-os').then(res => res.json());
+                    const fetchAtivos = fetch('https://work.produ-cloud.com/webhook/agoora-hub-carrega_ativos').then(res => res.json());
+                    const fetchHistoricos = fetch('https://work.produ-cloud.com/webhook/agoora-hub_carrega_historico_web').then(res => res.json());
+                    const fetchCRM = fetch('https://work.produ-cloud.com/webhook/agoora-hub-carrega_crm').then(res => res.json());
+
+                    const [osData, ativosData, historicosData, crmData] = await Promise.all([fetchOS, fetchAtivos, fetchHistoricos, fetchCRM]);
+
+                    dataOS = osData;
+                    dataAtivos = ativosData;
+                    dataHistoricos = historicosData;
+                    dataCRM = crmData;
+
+                    // Ordenar os dados em ordem alfabética
+                    dataOS.sort((a, b) => a.Nome_OS.localeCompare(b.Nome_OS));
+                    dataAtivos.sort((a, b) => a.Nome_Ativo.localeCompare(b.Nome_Ativo));
+                    dataCRM.sort((a, b) => a.Nome_CRM.localeCompare(b.Nome_CRM));
+
+                } catch (error) {
+                    console.error('Falha ao carregar dados:', error);
+                    document.getElementById('os-list').innerHTML = `<p class="error-message">Não foi possível carregar os dados. Verifique a sua ligação ou os endpoints dos webhooks.</p>`;
+                    throw error;
+                }
+            }
+            
+            function showInitialSkeletons() {
+                const skeletonOSCard = `
+                    <div class="os-card skeleton">
+                        <div class="os-card-header">
+                            <div>
+                                <div class="skeleton-text" style="width: 60%;"></div>
+                                <div class="skeleton-p"></div>
+                            </div>
+                            <div class="skeleton-button"></div>
+                        </div>
+                    </div>`;
+                osListContainer.innerHTML = skeletonOSCard.repeat(3);
+
+                const skeletonItemCard = `<div class="crm-card skeleton"></div>`;
+                document.getElementById('ativos-list').innerHTML = skeletonItemCard.repeat(6);
+                crmListContainer.innerHTML = skeletonItemCard.repeat(6);
+            }
+            
+            async function initializeApp() {
+                showInitialSkeletons();
+                await fetchAllData();
+                showDashboard();
+            }
+
+            initializeApp();
+
+            // --- LÓGICA DE GERAÇÃO DE PDF ---
+            async function generatePDF() {
+                const os = dataOS.find(o => o.ID_OS === currentOSId);
+                if (!os) return;
+
+                generatePdfBtn.textContent = 'Gerando...';
+                generatePdfBtn.disabled = true;
+
+                const printableContent = document.createElement('div');
+                printableContent.style.position = 'absolute';
+                printableContent.style.left = '-9999px';
+                printableContent.style.width = '210mm';
+                printableContent.style.padding = '15mm';
+                printableContent.style.backgroundColor = 'white';
+                printableContent.style.fontFamily = 'Arial, sans-serif';
+                printableContent.style.fontSize = '12px';
+                printableContent.style.color = '#333';
+                printableContent.style.boxSizing = 'border-box';
+                
+                const crm = os.ID_CRM && os.ID_CRM !== 'SEM CRM' ? dataCRM.find(c => c.ID_CRM_Notion === os.ID_CRM) : null;
+                const historicosVisiveis = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar].filter(h => h.ID_OS_Vinculada === currentOSId && !historicosParaApagar.some(del => del.ID_Historico_Web === h.ID_Historico_Web));
+                const grossValue = calculateGrossValue(currentOSId);
+                const discountValue = os.Desconto_OS || 0;
+                const finalTotal = grossValue - discountValue;
+
+                let pdfHtml = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                        <h1 style="margin: 0; color: #007bff; font-size: 24px;">Agoora Hub</h1>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; font-size: 20px;">Ordem de Serviço</h2>
+                            <p style="margin: 5px 0 0;">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px;">${os.Nome_OS}</h3>
+                `;
+
+                if (crm) {
+                    pdfHtml += `
+                        <div style="margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">Dados do Cliente</h4>
+                            <p style="margin: 4px 0;"><strong>Nome:</strong> ${crm.Nome_CRM || 'N/D'}</p>
+                            <p style="margin: 4px 0;"><strong>Telefone:</strong> ${crm.Telefone || 'N/D'}</p>
+                            <p style="margin: 4px 0;"><strong>E-mail:</strong> ${crm.Email || 'N/D'}</p>
+                            <p style="margin: 4px 0;"><strong>Endereço:</strong> ${crm.Endereco_Completo || 'N/D'}</p>
+                        </div>
+                    `;
+                }
+
+                pdfHtml += `<h3 style="margin-top: 30px; font-size: 16px;">Itens da OS</h3>`;
+                
+                const groupedByClassification = historicosVisiveis.reduce((acc, historico) => {
+                    const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                    const classification = (ativo && ativo.Classificacao) ? ativo.Classificacao : 'Sem Classificação';
+                    if (!acc[classification]) acc[classification] = [];
+                    acc[classification].push(historico);
+                    return acc;
+                }, {});
+
+                const sortedClassifications = Object.keys(groupedByClassification).sort((a, b) => {
+                    const order = { 'Local': 1, 'Profissional': 2 };
+                    const aOrder = order[a] || 3, bOrder = order[b] || 3;
+                    if (aOrder !== bOrder) return aOrder - bOrder;
+                    return a.localeCompare(b);
+                });
+
+                sortedClassifications.forEach(classification => {
+                    pdfHtml += `<h4 style="margin-top: 20px; font-style: italic; color: #555; font-size: 14px;">${classification}</h4>`;
+                    pdfHtml += `<table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
+                                <thead>
+                                    <tr style="background-color: #eee;">
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Ativo</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Período</th>
+                                        <th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    const historicosDoGrupo = groupedByClassification[classification];
+                    historicosDoGrupo.forEach(historico => {
+                        const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                        if (!ativo) return;
+                        const start = new Date(historico.Inicio_Historico), end = new Date(historico.Fim_Historico);
+                        let periodoHtml = (historico.Tipo_Faturamento === 'hora')
+                            ? `${formatDate(start)} - ${formatDate(end)}`
+                            : `${formatDateOnly(start)} - ${formatDateOnly(end)}`;
+                        
+                        pdfHtml += `<tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${ativo.Nome_Ativo}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${periodoHtml}</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(historico.Valor_Calculado)}</td>
+                                    </tr>`;
+                    });
+
+                    pdfHtml += `</tbody></table>`;
+                });
+
+                pdfHtml += `
+                    <div style="margin-top: 40px; page-break-inside: avoid; text-align: right;">
+                        <table style="display: inline-block; border-top: 2px solid #333; padding-top: 10px; font-size: 12px;">
+                            <tr>
+                                <td style="padding: 5px 10px;">Valor Bruto:</td>
+                                <td style="padding: 5px 10px; text-align: right;">${formatCurrency(grossValue)}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 10px;">Desconto:</td>
+                                <td style="padding: 5px 10px; text-align: right;">${formatCurrency(discountValue)}</td>
+                            </tr>
+                            <tr style="font-weight: bold; font-size: 1.2em;">
+                                <td style="padding: 10px;">Valor Total:</td>
+                                <td style="padding: 10px; text-align: right;">${formatCurrency(finalTotal)}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+
+                printableContent.innerHTML = pdfHtml;
+                document.body.appendChild(printableContent);
+
+                try {
+                    const canvas = await html2canvas(printableContent, { scale: 2 });
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                    
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save(`${os.Nome_OS}.pdf`);
+
+                } catch(e) {
+                    console.error("Erro ao gerar PDF:", e);
+                    alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
+                } finally {
+                    document.body.removeChild(printableContent);
+                    generatePdfBtn.textContent = 'Gerar PDF';
+                    generatePdfBtn.disabled = false;
+                }
+            }
+
+            generatePdfBtn.addEventListener('click', generatePDF);
+        });
+    </script>
+    <!-- FIM DO JAVASCRIPT EMBUTIDO -->
+</body>
+</html>
