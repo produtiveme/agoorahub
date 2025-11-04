@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes da OS - Agoora Hub</title>
     
-    <!-- CSS Global -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Bibliotecas para Geração de PDF (usadas nesta página) -->
+    <!-- Bibliotecas para Geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>Gerenciador - Agoora Hub</h1>
+        <div class="header-title">
+            <img src="https://static.wixstatic.com/media/8e154d_4a12ed9159714e48b78edd19819bb5a0~mv2.png/v1/fill/w_40,h_40,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo_Redondo.png" alt="Logo Agoora Hub">
+            <h1>Gerenciador - Agoora Hub</h1>
+        </div>
         <nav>
             <a href="os.html" id="nav-os-btn" class="active">Painel de OS</a>
             <a href="ativo.html" id="nav-ativos-btn">Painel de Ativos</a>
@@ -24,7 +27,7 @@
     </header>
 
     <main>
-        <!-- TELA 2: DETALLES DA OS -->
+        <!-- TELA 2: DETALHES DA OS -->
         <div id="details-view">
             <div class="details-header">
                 <button id="back-to-dashboard-btn">&leftarrow; Voltar ao Painel de OS</button>
@@ -68,7 +71,7 @@
 
             <h3>Ativos Alocados</h3>
             <div id="alocados-list" class="card">
-                <p>Carregando alocações...</p>
+                <p>Carregando ativos...</p>
             </div>
 
             <!-- INÍCIO: Resumo Financeiro -->
@@ -98,8 +101,8 @@
             </div>
         </div>
     </main>
-
-    <!-- MODAL PARA CRIAR/EDITAR OS (Usado para editar a OS atual) -->
+    
+    <!-- MODAL PARA CRIAR/EDITAR OS (Usado para editar) -->
     <div id="os-modal" class="modal-overlay is-hidden">
         <div class="modal-content">
             <button id="os-modal-close-btn" class="modal-close-btn">&times;</button>
@@ -121,8 +124,8 @@
             </div>
         </div>
     </div>
-
-    <!-- MODAL PARA EDITAR HISTÓRICO (Usado nesta página) -->
+    
+    <!-- MODAL PARA EDITAR HISTÓRICO -->
     <div id="historico-edit-modal" class="modal-overlay is-hidden">
         <div class="modal-content">
             <button id="historico-modal-close-btn" class="modal-close-btn">&times;</button>
@@ -136,7 +139,7 @@
                 </div>
                 <div id="edit-date-inputs-hora" class="date-time-inputs">
                     <label>Início: <input type="datetime-local" id="edit-start-time-input"></label>
-                    <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                    <label>Fim: <input type="datetime-local" id="edit-end-time-input"></label>
                 </div>
                 <div id="edit-date-inputs-diaria" class="date-time-inputs is-hidden">
                     <label>Data de Início: <input type="date" id="edit-start-date-input"></label>

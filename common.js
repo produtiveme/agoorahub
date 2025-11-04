@@ -73,13 +73,42 @@ async function fetchAllData(forceRefresh = false) {
     if (forceRefresh || !dataOS || !dataAtivos || !dataHistoricos || !dataCRM) {
         console.log("Cache não encontrado ou 'forceRefresh' ativado. Buscando dados da API...");
         try {
-            const [osData, ativosData, historicosData, crmData] = await Promise.all([
+            // Alterado de Promise.all para Promise.allSettled para depuração
+            const results = await Promise.allSettled([
                 fetch(API_URLS.OS).then(res => res.json()),
                 fetch(API_URLS.ATIVOS).then(res => res.json()),
                 fetch(API_URLS.HISTORICOS).then(res => res.json()),
                 fetch(API_URLS.CRM).then(res => res.json())
             ]);
 
+            // Verificar os resultados
+            const [osResult, ativosResult, historicosResult, crmResult] = results;
+
+            // Log de erros detalhado para depuração
+            if (osResult.status === 'rejected') {
+                console.error('Falha ao carregar OS:', osResult.reason);
+            }
+            if (ativosResult.status === 'rejected') {
+                console.error('Falha ao carregar ATIVOS:', ativosResult.reason);
+            }
+            if (historicosResult.status === 'rejected') {
+                console.error('Falha ao carregar HISTORICOS:', historicosResult.reason);
+            }
+            if (crmResult.status === 'rejected') {
+                console.error('Falha ao carregar CRM:', crmResult.reason);
+            }
+
+            // Se qualquer um falhar, lançar o erro genérico para a UI
+            if (results.some(r => r.status === 'rejected')) {
+                throw new Error('Uma ou mais requisições à API falharam. Verifique o console para detalhes.');
+            }
+            
+            // Extrair dados se tudo deu certo
+            const osData = osResult.value;
+            const ativosData = ativosResult.value;
+            const historicosData = historicosResult.value;
+            const crmData = crmResult.value;
+            
             // Ordenar os dados
             dataOS = osData.sort((a, b) => a.Nome_OS.localeCompare(b.Nome_OS));
             dataAtivos = ativosData.sort((a, b) => a.Nome_Ativo.localeCompare(b.Nome_Ativo));
@@ -93,7 +122,7 @@ async function fetchAllData(forceRefresh = false) {
             setCache(CACHE_KEYS.CRM, dataCRM);
 
         } catch (error) {
-            console.error('Falha ao carregar dados:', error);
+            console.error('Falha ao carregar dados (catch principal):', error);
             throw error; // Propaga o erro para quem chamou
         }
     } else {
@@ -128,6 +157,37 @@ function getIdFromUrl() {
 
 
 // --- LÓGICA DE NEGÓCIO COMPARTILHADA ---
+
+/**
+ * Calcula o valor bruto de uma OS, considerando as alterações pendentes.
+ * @param {string} osId - O ID da OS.
+ * @param {Array} dataHistoricos - Array original de históricos.
+ * @param {Array} [historicosParaCriar=[]] - Array de novos históricos.
+ * @param {Array} [historicosParaApagar=[]] - Array de históricos para deletar.
+ * @param {Array} [historicosParaAtualizar=[]] - Array de históricos atualizados.
+ * @returns {number} O valor bruto calculado.
+ */
+function calculateGrossValue(osId, dataHistoricos, historicosParaCriar = [], historicosParaApagar = [], historicosParaAtualizar = []) {
+    const idsApagados = historicosParaApagar.map(h => h.ID_Historico_Web);
+    const idsAtualizados = historicosParaAtualizar.map(h => h.ID_Historico_Web);
+
+    // 1. Históricos originais que NÃO foram apagados NEM atualizados
+    const historicosBase = dataHistoricos.filter(h => 
+        h.ID_OS_Vinculada === osId &&
+        !idsApagados.includes(h.ID_Historico_Web) && 
+        !idsAtualizados.includes(h.ID_Historico_Web)
+    );
+
+    // 2. Novos históricos E históricos atualizados (que são para esta OS)
+    const historicosNovosEAtualizados = [
+        ...historicosParaCriar, 
+        ...historicosParaAtualizar
+    ].filter(h => h.ID_OS_Vinculada === osId);
+
+    // Soma tudo
+    return [...historicosBase, ...historicosNovosEAtualizados]
+        .reduce((total, h) => total + (h.Valor_Calculado || 0), 0);
+}
 
 /**
  * Verifica se um ativo está disponível em um determinado período.
