@@ -72,6 +72,7 @@
             margin: 0 auto;
             width: 100%;
             flex: 1;
+            box-sizing: border-box; /* Garante que padding não afete a largura total */
         }
 
         .is-hidden {
@@ -103,6 +104,7 @@
             border-radius: 5px;
             padding: 1.5rem;
             margin-bottom: 2rem;
+            box-sizing: border-box; /* Garante que padding não afete a largura total */
         }
 
         /* --- Telas Principais --- */
@@ -129,11 +131,11 @@
         /* --- Tela de Detalhes da OS --- */
         .details-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; }
         #back-to-dashboard-btn, #back-to-ativos-panel-btn, #back-to-crm-panel-btn { margin-bottom: 0; background-color: var(--secondary-color); }
-        #ativo-search-input { width: calc(100% - 22px); padding: 10px; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 5px; }
+        #ativo-search-input { width: 100%; padding: 10px; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 5px; box-sizing: border-box; }
         input[type="datetime-local"], input[type="date"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; box-sizing: border-box; }
         .date-time-inputs { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
         .date-time-inputs label { flex: 1; min-width: 200px; }
-        #ativo-suggestions { border: 1px solid var(--border-color); border-top: none; max-height: 150px; overflow-y: auto; background-color: white; position: relative; width: 100%; box-sizing: border-box; }
+        #ativo-suggestions { border: 1px solid var(--border-color); border-top: none; max-height: 150px; overflow-y: auto; background-color: white; position: relative; width: 100%; box-sizing: border-box; z-index: 10; } /* Adicionado z-index */
         #ativo-suggestions div { padding: 10px; cursor: pointer; }
         #ativo-suggestions div:hover { background-color: #f0f0f0; }
         .error-message { color: var(--error-color); margin-top: 10px; font-weight: bold; }
@@ -152,13 +154,14 @@
         }
         .alocado-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 1rem; border-bottom: 1px solid var(--border-color); }
         .alocado-item.last-in-group { border-bottom: none; }
+        .alocado-item .info { flex: 1; min-width: 200px; margin-right: 1rem;} /* Responsividade */
         .alocado-item .info .ativo-name { font-weight: bold; }
         .alocado-item .info .periodo { font-size: 0.9em; color: #555; }
         .alocado-item-actions { display: flex; gap: 0.5rem; }
         .alocado-item-actions button { padding: 5px 8px; font-size: 0.8rem; }
         .remove-btn { background-color: var(--error-color); }
 
-        .billing-type-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; }
+        .billing-type-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
         
         /* --- Resumo Financeiro --- */
         #financial-details-grid {
@@ -180,12 +183,13 @@
         .financial-item span {
             font-size: 1.5rem;
             font-weight: bold;
+            word-break: break-all; /* Evita quebra de layout */
         }
         #os-final-total-value {
              color: var(--success-color);
         }
 
-        .actions-footer { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: right; }
+        .actions-footer { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: right; flex-wrap: wrap; }
         #save-os-btn.pending-changes { background-color: var(--highlight-color); color: #333; font-weight: bold; }
         #save-status { text-align: right; margin-right: auto; }
         #save-status.success { color: var(--success-color); }
@@ -196,8 +200,8 @@
         .item-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
         .ativo-card, .crm-card { border: 3px solid var(--border-color); transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 5px; padding: 1rem; background-color: var(--card-bg); cursor: pointer; }
         .ativo-card-header, .crm-card-header { display: block; }
-        .item-card-title { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;}
-        .ativo-card-header p, .crm-card-header p { font-size: 0.9em; color: #555; margin: 0.5rem 0 0 0;}
+        .item-card-title { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap;}
+        .ativo-card-header p, .crm-card-header p { font-size: 0.9em; color: #555; margin: 0.5rem 0 0 0; word-break: break-all; }
         .item-tag { font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; color: white; }
         .ativo-valores { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
         .valor-badge { font-size: 0.9rem; padding: 5px 10px; border-radius: 5px; background-color: #e9ecef; }
@@ -229,8 +233,8 @@
         .ativo-card.skeleton, .crm-card.skeleton { height: 120px; border-color: var(--skeleton-bg); cursor: default; }
 
         /* --- Modals --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box;}
+        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 100%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto;}
         .modal-close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2rem; color: #333; cursor: pointer; }
         .modal-body .form-group { margin-bottom: 1rem; }
         .modal-body .form-group:last-child { margin-bottom: 0; }
@@ -248,6 +252,29 @@
             background-color: #e9ecef;
             color: #6c757d;
             font-size: 0.9rem;
+        }
+
+        /* --- Media Queries para Responsividade --- */
+        @media (max-width: 768px) {
+            header { padding: 1rem; flex-direction: column; gap: 1rem; }
+            main { padding: 1rem; }
+            .details-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            #back-to-dashboard-btn, #back-to-ativos-panel-btn, #back-to-crm-panel-btn { margin-bottom: 1rem; }
+            .os-card-header { flex-direction: column; align-items: flex-start; }
+            .os-card-actions { width: 100%; justify-content: flex-start; margin-top: 1rem; }
+            .actions-footer { justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.25rem; }
+            header nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+            header nav button { padding: 6px 10px; font-size: 0.9rem; margin-left: 0; }
+            .alocado-item { flex-direction: column; align-items: flex-start; }
+            .alocado-item-actions { margin-top: 0.75rem; }
+            .financial-item span { font-size: 1.25rem; }
+            .modal-content { padding: 1.5rem; }
+            .modal-footer { display: flex; flex-direction: column; gap: 0.5rem; }
+            .modal-footer button { width: 100%; margin-left: 0; }
         }
 
     </style>
@@ -440,7 +467,7 @@
                 </div>
                 <div id="edit-date-inputs-hora" class="date-time-inputs">
                     <label>Início: <input type="datetime-local" id="edit-start-time-input"></label>
-                    <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                    <label>Fim: <input type="datetime-local" id="edit-end-time-input"></label>
                 </div>
                 <div id="edit-date-inputs-diaria" class="date-time-inputs is-hidden">
                     <label>Data de Início: <input type="date" id="edit-start-date-input"></label>
@@ -545,6 +572,7 @@
             const generateRandomColor = () => { const h = Math.floor(Math.random() * 360); return `hsl(${h}, 70%, 50%)`; };
             const toLocalISOString = (date) => { const tzoffset = (new Date()).getTimezoneOffset() * 60000; return (new Date(date - tzoffset)).toISOString().slice(0, -1); };
             const parseCurrency = (value) => Number(value.replace(/\D/g, '')) / 100;
+            const MS_PER_DAY = 1000 * 60 * 60 * 24; // Milissegundos em um dia
 
             // --- LÓGICA DE NEGÓCIO E ESTADO ---
             const updateSaveButtonState = () => {
@@ -755,7 +783,7 @@
                 const initialDate = new Date();
                 scheduleContainer.innerHTML = generateCalendarHTML(currentAtivoId, initialDate.getFullYear(), initialDate.getMonth());
                 scheduleContainer.querySelector('.prev-month').addEventListener('click', () => updateCalendar(currentAtivoId, -1, scheduleContainer));
-                scheduleContainer.querySelector('.next-month').addEventListener('click', () => updateCalendar(currentAtivoId, 1, container));
+                scheduleContainer.querySelector('.next-month').addEventListener('click', () => updateCalendar(currentAtivoId, 1, scheduleContainer)); // Corrigido: era 'container'
                 scheduleContainer.querySelector('.calendar-grid').addEventListener('click', handleDayClick);
             };
 
@@ -1052,11 +1080,15 @@
                 } else { 
                     start = document.getElementById('start-date-input').value; end = document.getElementById('end-date-input').value;
                     if (!start || !end) { errorMessage.textContent = "Preencha as datas de início e fim."; return; }
-                    const startDate = new Date(start + 'T00:00:00-03:00'); const endDate = new Date(end + 'T23:59:59-03:00');
+                    // CORREÇÃO CÁLCULO DIÁRIA: Usar T00:00 para start e T23:59 para end para garantir que a diferença seja contada corretamente.
+                    const startDate = new Date(start + 'T00:00:00-03:00'); 
+                    const endDate = new Date(end + 'T23:59:59-03:00'); // Usar 23:59:59 do dia final
                     if (startDate > endDate) { errorMessage.textContent = "A data de fim deve ser igual ou posterior à de início."; return; }
                     valor = ativo['Valor Diária'];
                     if (valor === null || valor === undefined) { errorMessage.textContent = "Este ativo não possui 'Valor Diária' definido."; return; }
-                    duracao = ((endDate - startDate) / 864e5) + 1; duracao = Math.round(duracao); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                    // CORREÇÃO CÁLCULO DIÁRIA: Arredondar a diferença de dias. Ex: 13 a 16 = 3.999... dias -> round(4). 13 a 13 = 0.999... dias -> round(1).
+                    duracao = Math.round((endDate - startDate) / MS_PER_DAY);
+                    valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
                 }
                 if (!checkAvailability(selectedAtivoId, inicioISO, fimISO)) { errorMessage.textContent = "Erro: Ativo já alocado neste período."; return; }
                 historicosParaCriar.push({ ID_Historico_Web: 'hist-' + Date.now(), ID_Ativo: selectedAtivoId, ID_OS_Vinculada: currentOSId, Inicio_Historico: inicioISO, Fim_Historico: fimISO, Tipo_Faturamento: currentBillingType, Valor_Calculado: valorCalculado, Duracao_Faturada: duracao });
@@ -1125,11 +1157,15 @@
                 } else {
                     start = document.getElementById('edit-start-date-input').value; end = document.getElementById('edit-end-date-input').value;
                     if (!start || !end) { errorEl.textContent = "Preencha as datas de início e fim."; return; }
-                    const startDate = new Date(start + 'T00:00:00-03:00'); const endDate = new Date(end + 'T23:59:59-03:00');
+                    // CORREÇÃO CÁLCULO DIÁRIA: Usar T00:00 para start e T23:59 para end
+                    const startDate = new Date(start + 'T00:00:00-03:00'); 
+                    const endDate = new Date(end + 'T23:59:59-03:00');
                     if (startDate > endDate) { errorEl.textContent = "Fim deve ser igual ou posterior ao início."; return; }
                     valor = ativo['Valor Diária'];
                     if (valor === null || valor === undefined) { errorEl.textContent = "Este ativo não possui 'Valor Diária'."; return; }
-                    duracao = ((endDate - startDate) / 864e5) + 1; duracao = Math.round(duracao); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
+                     // CORREÇÃO CÁLCULO DIÁRIA: Arredondar a diferença de dias.
+                    duracao = Math.round((endDate - startDate) / MS_PER_DAY);
+                    valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
                 }
                 if (!checkAvailability(ativo.ID_Ativo, inicioISO, fimISO, historicoEditContext.ID_Historico_Web)) { errorEl.textContent = "Conflito de agendamento detectado."; return; }
                 
