@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Ativo - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <a href="os.html" id="nav-os-btn">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn" class="active">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 4: DETALHES DO ATIVO -->
+        <div id="ativo-details-view">
+             <button id="back-to-ativos-panel-btn">&leftarrow; Voltar ao Painel de Ativos</button>
+             <div class="card">
+                <h2 id="ativo-detail-title">Carregando...</h2>
+                <div id="ativo-detail-info" class="detail-grid"></div>
+             </div>
+             <div class="card">
+                <h3>Agenda do Ativo</h3>
+                <div id="ativo-detail-schedule">
+                    <p>Carregando agenda...</p>
+                </div>
+             </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DETALHES DO DIA (Usado nesta página) -->
+    <div id="day-details-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="day-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="modal-title">Agendamentos do Dia</h3>
+            <div class="modal-body" id="modal-body-day-details"></div>
+        </div>
+    </div>
+    
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="detalhe-ativo.js"></script>
+</body>
+</html>

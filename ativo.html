@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Ativos - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <a href="os.html" id="nav-os-btn">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn" class="active">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 3: PAINEL DE ATIVOS -->
+        <div id="ativos-view">
+            <h2>Painel de Ativos</h2>
+            <div class="card filters-container" id="ativos-filters">
+                <input type="text" id="ativo-name-filter" placeholder="Filtrar por nome...">
+                <select id="ativo-type-filter"></select>
+                <select id="ativo-classification-filter"></select>
+            </div>
+            <div id="ativos-list" class="item-list-container">
+                <!-- Skeletons de carregamento -->
+                <div class="ativo-card skeleton"></div>
+                <div class="ativo-card skeleton"></div>
+                <div class="ativo-card skeleton"></div>
+                <div class="ativo-card skeleton"></div>
+                <div class="ativo-card skeleton"></div>
+                <div class="ativo-card skeleton"></div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="ativo.js"></script>
+</body>
+</html>

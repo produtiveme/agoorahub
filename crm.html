@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de CRM - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <a href="os.html" id="nav-os-btn">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn" class="active">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 5: PAINEL DE CRM -->
+        <div id="crm-view">
+            <h2>Painel de CRM</h2>
+            <div class="card filters-container">
+                <input type="text" id="crm-name-filter" placeholder="Filtrar por nome...">
+                <input type="text" id="crm-doc-filter" placeholder="Filtrar por CPF/CNPJ...">
+                <select id="crm-classification-filter"></select>
+            </div>
+            <div id="crm-list" class="item-list-container">
+                <!-- Skeletons de carregamento -->
+                <div class="crm-card skeleton"></div>
+                <div class="crm-card skeleton"></div>
+                <div class="crm-card skeleton"></div>
+                <div class="crm-card skeleton"></div>
+                <div class="crm-card skeleton"></div>
+                <div class="crm-card skeleton"></div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="crm.js"></script>
+</body>
+</html>

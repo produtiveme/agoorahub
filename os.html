@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de OS - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <!-- Navegação entre páginas -->
+            <a href="os.html" id="nav-os-btn" class="active">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 1: PAINEL DE OS -->
+        <div id="dashboard-view">
+            <div class="actions">
+                <button id="create-new-os-btn">Criar Nova Ordem de Serviço</button>
+            </div>
+            <h2>Ordens de Serviço Atuais</h2>
+            <div id="os-list" class="os-list-container">
+                <!-- Skeletons de carregamento -->
+                <div class="os-card skeleton">
+                    <div class="os-card-header">
+                        <div>
+                            <div class="skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton-p"></div>
+                        </div>
+                        <div class="skeleton-button"></div>
+                    </div>
+                </div>
+                <div class="os-card skeleton">
+                    <div class="os-card-header">
+                        <div>
+                            <div class="skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton-p"></div>
+                        </div>
+                        <div class="skeleton-button"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PARA CRIAR/EDITAR OS (Usado nesta página) -->
+    <div id="os-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="os-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="os-modal-title"></h3>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="os-name-input">Nome da Ordem de Serviço:</label>
+                    <input type="text" id="os-name-input" placeholder="Ex: OS-28 - Evento Corporativo">
+                </div>
+                <div class="form-group">
+                    <label for="os-modal-discount-input">Valor de Desconto:</label>
+                    <input type="text" id="os-modal-discount-input" placeholder="R$ 0,00">
+                </div>
+                <p id="os-modal-error" class="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="os-modal-cancel-btn" class="modal-cancel-btn">Cancelar</button>
+                <button id="os-modal-save-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="os.js"></script>
+</body>
+</html>

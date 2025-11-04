@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do CRM - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <a href="os.html" id="nav-os-btn">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn" class="active">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 6: DETALHES DO CRM -->
+        <div id="crm-details-view">
+            <button id="back-to-crm-panel-btn">&leftarrow; Voltar ao Painel de CRM</button>
+            <div class="card">
+                <div class="details-header">
+                    <h2 id="crm-detail-title">Carregando...</h2>
+                    <button id="open-notion-crm-btn">Abrir no Notion</button>
+                </div>
+                <div id="crm-detail-info" class="detail-grid">
+                    <p>Carregando detalhes...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="detalhe-crm.js"></script>
+</body>
+</html>

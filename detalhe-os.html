@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da OS - Agoora Hub</title>
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Bibliotecas para Geração de PDF (usadas nesta página) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Gerenciador - Agoora Hub</h1>
+        <nav>
+            <a href="os.html" id="nav-os-btn" class="active">Painel de OS</a>
+            <a href="ativo.html" id="nav-ativos-btn">Painel de Ativos</a>
+            <a href="crm.html" id="nav-crm-btn">CRM</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TELA 2: DETALLES DA OS -->
+        <div id="details-view">
+            <div class="details-header">
+                <button id="back-to-dashboard-btn">&leftarrow; Voltar ao Painel de OS</button>
+                <h2 id="os-details-title">Carregando...</h2>
+                <button id="edit-os-details-btn">Editar OS</button>
+            </div>
+
+            <!-- INÍCIO: Card de Informações do CRM -->
+            <div id="crm-details-panel" class="card is-hidden">
+                <h3>Informações do Cliente</h3>
+                <div id="crm-info-container" class="detail-grid"></div>
+            </div>
+            <!-- FIM: Card de Informações do CRM -->
+
+            <div class="card">
+                <h3>Adicionar Novo Ativo</h3>
+                <div id="add-ativo-form">
+                    <input type="text" id="ativo-search-input" placeholder="Buscar Ativo por nome..." autocomplete="off">
+                    <div id="ativo-suggestions"></div>
+                    
+                    <div class="billing-type-selector">
+                        <strong>Faturar por:</strong>
+                        <label><input type="radio" name="billing-type" value="hora" checked> Hora</label>
+                        <label><input type="radio" name="billing-type" value="diaria"> Diária</label>
+                    </div>
+
+                    <div id="date-inputs-hora" class="date-time-inputs">
+                        <label>Início: <input type="datetime-local" id="start-time-input"></label>
+                        <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                    </div>
+
+                    <div id="date-inputs-diaria" class="date-time-inputs is-hidden">
+                        <label>Data de Início: <input type="date" id="start-date-input"></label>
+                        <label>Data de Fim: <input type="date" id="end-date-input"></label>
+                    </div>
+
+                    <button id="add-ativo-btn">Adicionar Ativo à OS</button>
+                    <p id="error-message" class="error-message"></p>
+                </div>
+            </div>
+
+            <h3>Ativos Alocados</h3>
+            <div id="alocados-list" class="card">
+                <p>Carregando alocações...</p>
+            </div>
+
+            <!-- INÍCIO: Resumo Financeiro -->
+            <div id="financial-summary-panel" class="card">
+                <h3>Resumo Financeiro</h3>
+                <div id="financial-details-grid">
+                    <div class="financial-item">
+                        <strong>Valor Bruto</strong>
+                        <span id="os-gross-value">R$ 0,00</span>
+                    </div>
+                    <div class="financial-item">
+                        <strong>Valor de Desconto</strong>
+                        <span id="os-discount-value">R$ 0,00</span>
+                    </div>
+                    <div class="financial-item">
+                        <strong>Valor Total da OS</strong>
+                        <span id="os-final-total-value">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+            <!-- FIM: Resumo Financeiro -->
+
+            <div class="actions-footer">
+                <p id="save-status"></p>
+                <button id="generate-pdf-btn" style="background-color: var(--secondary-color);">Gerar PDF</button>
+                <button id="save-os-btn" disabled>Salvar Históricos no Notion</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PARA CRIAR/EDITAR OS (Usado para editar a OS atual) -->
+    <div id="os-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="os-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="os-modal-title"></h3>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="os-name-input">Nome da Ordem de Serviço:</label>
+                    <input type="text" id="os-name-input" placeholder="Ex: OS-28 - Evento Corporativo">
+                </div>
+                <div class="form-group">
+                    <label for="os-modal-discount-input">Valor de Desconto:</label>
+                    <input type="text" id="os-modal-discount-input" placeholder="R$ 0,00">
+                </div>
+                <p id="os-modal-error" class="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="os-modal-cancel-btn" class="modal-cancel-btn">Cancelar</button>
+                <button id="os-modal-save-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA EDITAR HISTÓRICO (Usado nesta página) -->
+    <div id="historico-edit-modal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button id="historico-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h3 id="historico-modal-title">Editar Alocação</h3>
+            <div class="modal-body">
+                <p><strong>Ativo:</strong> <span id="historico-modal-ativo-name"></span></p>
+                <div class="billing-type-selector">
+                    <strong>Faturar por:</strong>
+                    <label><input type="radio" name="edit-billing-type" value="hora"> Hora</label>
+                    <label><input type="radio" name="edit-billing-type" value="diaria"> Diária</label>
+                </div>
+                <div id="edit-date-inputs-hora" class="date-time-inputs">
+                    <label>Início: <input type="datetime-local" id="edit-start-time-input"></label>
+                    <label>Fim: <input type="datetime-local" id="end-time-input"></label>
+                </div>
+                <div id="edit-date-inputs-diaria" class="date-time-inputs is-hidden">
+                    <label>Data de Início: <input type="date" id="edit-start-date-input"></label>
+                    <label>Data de Fim: <input type="date" id="edit-end-date-input"></label>
+                </div>
+                <p id="historico-modal-error" class="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="historico-modal-cancel-btn" class="modal-cancel-btn">Cancelar</button>
+                <button id="historico-modal-save-btn">Salvar Alteração</button>
+            </div>
+        </div>
+    </div>
+
+
+    <footer>
+        <p id="system-version">v3.0.0 (MPA)</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="common.js"></script>
+    <script src="detalhe-os.js"></script>
+</body>
+</html>
