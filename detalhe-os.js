@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // --- DADOS GLOBAIS (do cache) ---
     let dataOS = [];
     let dataAtivos = [];
@@ -12,402 +12,322 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedAtivoId = null;
     let currentBillingType = 'hora';
     let historicoEditContext = null;
-    
-    // Arrays para gerenciar o "lote" de alterações
+
+    // "Staging" para alterações
     let historicosParaCriar = [];
     let historicosParaApagar = [];
     let historicosParaAtualizar = [];
 
     // --- ELEMENTOS DO DOM ---
+    const mainView = document.getElementById('details-view');
+    const backBtn = document.getElementById('back-to-dashboard-btn');
     const osDetailsTitle = document.getElementById('os-details-title');
+    const editOSDetailsBtn = document.getElementById('edit-os-details-btn');
+    
+    // Painel CRM
     const crmPanel = document.getElementById('crm-details-panel');
     const crmInfoContainer = document.getElementById('crm-info-container');
-    const alocadosList = document.getElementById('alocados-list');
-    const saveOSBtn = document.getElementById('save-os-btn');
-    const saveStatus = document.getElementById('save-status');
-    const generatePdfBtn = document.getElementById('generate-pdf-btn');
-
-    // Formulário de Adicionar Ativo
+    
+    // Form Adicionar Ativo
     const addAtivoBtn = document.getElementById('add-ativo-btn');
     const searchInput = document.getElementById('ativo-search-input');
     const suggestionsContainer = document.getElementById('ativo-suggestions');
     const errorMessage = document.getElementById('error-message');
     const billingTypeRadios = document.querySelectorAll('input[name="billing-type"]');
     
-    // Botões de Navegação/Ação
-    const backBtn = document.getElementById('back-to-dashboard-btn');
-    const editOSDetailsBtn = document.getElementById('edit-os-details-btn');
+    // Lista de Alocados
+    const alocadosList = document.getElementById('alocados-list');
+    
+    // Resumo Financeiro
+    const osGrossValueEl = document.getElementById('os-gross-value');
+    const osDiscountValueEl = document.getElementById('os-discount-value');
+    const osFinalTotalValueEl = document.getElementById('os-final-total-value');
+    
+    // Rodapé de Ações
+    const saveOSBtn = document.getElementById('save-os-btn');
+    const saveStatus = document.getElementById('save-status');
+    const generatePdfBtn = document.getElementById('generate-pdf-btn');
 
-    // --- Modal de OS (para edição) ---
+    // Modais
     const osModal = document.getElementById('os-modal');
     const osModalCloseBtn = document.getElementById('os-modal-close-btn');
     const osModalCancelBtn = document.getElementById('os-modal-cancel-btn');
     const osModalDiscountInput = document.getElementById('os-modal-discount-input');
 
-    // --- Modal de Histórico ---
     const historicoEditModal = document.getElementById('historico-edit-modal');
     const historicoModalCloseBtn = document.getElementById('historico-modal-close-btn');
     const historicoModalCancelBtn = document.getElementById('historico-modal-cancel-btn');
     const historicoModalSaveBtn = document.getElementById('historico-modal-save-btn');
+    
 
-
-    // --- LÓGICA DE ESTADO (Pending Changes) ---
+    // --- RENDERIZAÇÃO ---
 
     /**
-     * Atualiza o estado do botão "Salvar no Notion" com base nas alterações pendentes.
+     * Atualiza o estado visual do botão "Salvar" (amarelo, desabilitado)
      */
     function updateSaveButtonState() {
         const hasPendingChanges = historicosParaCriar.length > 0 || historicosParaApagar.length > 0 || historicosParaAtualizar.length > 0;
         saveOSBtn.disabled = !hasPendingChanges;
         saveOSBtn.classList.toggle('pending-changes', hasPendingChanges);
-        if (!hasPendingChanges) {
-            saveStatus.textContent = '';
-        }
+        if (!hasPendingChanges) { saveStatus.textContent = ''; }
     }
 
     /**
-     * Atualiza o card de Resumo Financeiro.
+     * Atualiza o card de Resumo Financeiro (Bruto, Desconto, Total)
      */
     function updateFinancialSummary() {
         if (!currentOS) return;
         
-        // Usa a função global `calculateGrossValue` de common.js
-        const grossValue = calculateGrossValue(
-            currentOSId,
-            dataHistoricos,
-            historicosParaCriar,
-            historicosParaApagar,
-            historicosParaAtualizar
-        );
+        // CORREÇÃO: Agora chama a função de `common.js` passando o estado pendente
+        const grossValue = calculateGrossValue(currentOSId, dataHistoricos, historicosParaCriar, historicosParaApagar, historicosParaAtualizar);
         
-        const discountValue = currentOS ? (currentOS.Desconto_OS || 0) : 0;
+        const discountValue = currentOS.Desconto_OS || 0;
         const finalTotal = grossValue - discountValue;
 
-        document.getElementById('os-gross-value').textContent = formatCurrency(grossValue);
-        document.getElementById('os-discount-value').textContent = formatCurrency(discountValue);
-        document.getElementById('os-final-total-value').textContent = formatCurrency(finalTotal);
+        osGrossValueEl.textContent = formatCurrency(grossValue);
+        osDiscountValueEl.textContent = formatCurrency(discountValue);
+        osFinalTotalValueEl.textContent = formatCurrency(finalTotal);
     }
 
-
-    // --- RENDERIZAÇÃO ---
-
     /**
-     * Renderiza todos os detalhes da página (Título, CRM, Alocados, Financeiro).
+     * Renderiza a lista de ativos alocados, agrupados por classificação
      */
-    function renderDetails() {
-        if (!currentOS) {
-            osDetailsTitle.textContent = "Ordem de Serviço não encontrada.";
-            return;
-        }
-
-        osDetailsTitle.textContent = `Detalhes da ${currentOS.Nome_OS}`;
-        
-        // Renderizar painel do CRM
-        const crm = dataCRM.find(c => c.ID_CRM_Notion === currentOS.ID_CRM);
-        if (crm) {
-            crmInfoContainer.innerHTML = `
-                <div class="detail-item"><strong>Nome</strong> ${crm.Nome_CRM || 'N/D'}</div>
-                <div class="detail-item"><strong>Telefone</strong> ${crm.Telefone || 'N/D'}</div>
-                <div class="detail-item"><strong>E-mail</strong> ${crm.Email || 'N/D'}</div>
-                <div class="detail-item"><strong>CPF/CNPJ</strong> ${crm['CPF-CNPJ'] || 'N/D'}</div>
-                <div class="detail-item"><strong>Site</strong> ${crm.Site || 'N/D'}</div>
-                <div class="detail-item" style="grid-column: 1 / -1;"><strong>Endereço</strong> ${crm.Endereco_Completo || 'Nenhum endereço fornecido.'}</div>
-            `;
-            crmPanel.classList.remove('is-hidden');
-        } else {
-            crmPanel.classList.add('is-hidden');
-        }
-
-        // Renderizar lista de Ativos Alocados
+    function renderAlocadosList() {
+        if (!currentOSId) return;
         alocadosList.innerHTML = '';
+        
         const idsApagados = historicosParaApagar.map(h => h.ID_Historico_Web);
         const idsAtualizados = historicosParaAtualizar.map(h => h.ID_Historico_Web);
         
+        // 1. Históricos do cache que não estão em "apagar" ou "atualizar"
         const historicosBase = dataHistoricos.filter(h => 
+            h.ID_OS_Vinculada === currentOSId && // Filtra pela OS aqui
             !idsApagados.includes(h.ID_Historico_Web) && 
             !idsAtualizados.includes(h.ID_Historico_Web)
         );
         
-        const historicosVisiveis = [...historicosBase, ...historicosParaCriar, ...historicosParaAtualizar]
-            .filter(h => h.ID_OS_Vinculada === currentOSId);
+        // 2. Todos os históricos visíveis para esta OS
+        const historicosVisiveis = [
+            ...historicosBase, 
+            ...historicosParaCriar.filter(h => h.ID_OS_Vinculada === currentOSId), 
+            ...historicosParaAtualizar.filter(h => h.ID_OS_Vinculada === currentOSId)
+        ];
         
         if (historicosVisiveis.length === 0) {
             alocadosList.innerHTML = '<p>Nenhum ativo alocado nesta OS.</p>';
-        } else {
-            // Agrupa por classificação
-            const groupedByClassification = historicosVisiveis.reduce((acc, historico) => {
-                const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
-                const classification = (ativo && ativo.Classificacao) ? ativo.Classificacao : 'Sem Classificação';
-                if (!acc[classification]) acc[classification] = [];
-                acc[classification].push(historico);
-                return acc;
-            }, {});
-
-            // Ordena as classificações (Local, Profissional, Outros)
-            const sortedClassifications = Object.keys(groupedByClassification).sort((a, b) => {
-                const order = { 'Local': 1, 'Profissional': 2 };
-                const aOrder = order[a] || 3, bOrder = order[b] || 3;
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                return a.localeCompare(b);
-            });
-
-            // Cria o HTML
-            sortedClassifications.forEach(classification => {
-                const groupTitle = document.createElement('h4');
-                groupTitle.className = 'classification-group-title';
-                groupTitle.textContent = classification;
-                alocadosList.appendChild(groupTitle);
-
-                const historicosDoGrupo = groupedByClassification[classification];
-                historicosDoGrupo.forEach((historico, index) => {
-                    const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
-                    if (!ativo) return;
-                    const start = new Date(historico.Inicio_Historico), end = new Date(historico.Fim_Historico);
-                    let periodoHtml = (historico.Tipo_Faturamento === 'hora')
-                        ? `De: ${formatDate(start)} até ${formatDate(end)} (${historico.Duracao_Faturada.toFixed(1)} horas)`
-                        : `De: ${formatDateOnly(start)} até ${formatDateOnly(end)} (${historico.Duracao_Faturada} diárias)`;
-                    
-                    const item = document.createElement('div');
-                    item.className = 'alocado-item';
-                    if (index === historicosDoGrupo.length - 1) item.classList.add('last-in-group');
-                    item.innerHTML = `
-                        <div class="info">
-                            <p class="ativo-name">${ativo.Nome_Ativo}</p>
-                            <p class="periodo">${periodoHtml}</p>
-                            <p>Custo: ${formatCurrency(historico.Valor_Calculado)}</p>
-                        </div>
-                        <div class="alocado-item-actions">
-                            <button class="edit-btn" data-historico-id="${historico.ID_Historico_Web}">Editar</button>
-                            <button class="remove-btn" data-historico-id="${historico.ID_Historico_Web}">Remover</button>
-                        </div>`;
-                    alocadosList.appendChild(item);
-                });
-            });
+            return;
         }
-        
-        // Adiciona listeners aos botões de remover/editar recém-criados
+
+        // Agrupa por classificação
+        const groupedByClassification = historicosVisiveis.reduce((acc, historico) => {
+            const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+            const classification = (ativo && ativo.Classificacao) ? ativo.Classificacao : 'Sem Classificação';
+            if (!acc[classification]) acc[classification] = [];
+            acc[classification].push(historico);
+            return acc;
+        }, {});
+
+        // Ordena (Local, Profissional, Outros)
+        const sortedClassifications = Object.keys(groupedByClassification).sort((a, b) => {
+            const order = { 'Local Físico': 1, 'Profissional': 2 };
+            const aOrder = order[a] || 3, bOrder = order[b] || 3;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return a.localeCompare(b);
+        });
+
+        // Renderiza os grupos
+        sortedClassifications.forEach(classification => {
+            const groupTitle = document.createElement('h4');
+            groupTitle.className = 'classification-group-title';
+            groupTitle.textContent = classification;
+            alocadosList.appendChild(groupTitle);
+
+            const historicosDoGrupo = groupedByClassification[classification];
+            historicosDoGrupo.forEach((historico, index) => {
+                const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+                if (!ativo) return;
+                
+                const start = new Date(historico.Inicio_Historico), end = new Date(historico.Fim_Historico);
+                let periodoHtml = (historico.Tipo_Faturamento === 'hora')
+                    ? `De: ${formatDate(start)} até ${formatDate(end)} (${historico.Duracao_Faturada.toFixed(1)} horas)`
+                    : `De: ${formatDateOnly(start)} até ${formatDateOnly(end)} (${historico.Duracao_Faturada} diárias)`;
+                
+                const item = document.createElement('div');
+                item.className = 'alocado-item';
+                if (index === historicosDoGrupo.length - 1) item.classList.add('last-in-group');
+                item.innerHTML = `
+                    <div class="info">
+                        <p class="ativo-name">${ativo.Nome_Ativo}</p>
+                        <p class="periodo">${periodoHtml}</p>
+                        <p>Custo: ${formatCurrency(historico.Valor_Calculado)}</p>
+                    </div>
+                    <div class="alocado-item-actions">
+                        <button class="edit-btn" data-historico-id="${historico.ID_Historico_Web}">Editar</button>
+                        <button class="remove-btn" data-historico-id="${historico.ID_Historico_Web}">Remover</button>
+                    </div>`;
+                alocadosList.appendChild(item);
+            });
+        });
+
+        // Adiciona listeners aos botões
         alocadosList.querySelectorAll('.remove-btn').forEach(button => button.addEventListener('click', handleRemoveHistorico));
         alocadosList.querySelectorAll('.edit-btn').forEach(button => button.addEventListener('click', (e) => showHistoricoEditModal(e.target.dataset.historicoId)));
-        
-        // Atualiza o botão de salvar e o resumo financeiro
-        updateSaveButtonState();
-        updateFinancialSummary(); 
-    }
-
-
-    // --- LÓGICA DOS MODAIS (Específicos desta página) ---
-
-    /**
-     * Mostra o modal para editar um histórico de alocação.
-     * @param {string} historicoId - O ID (web ou temp) do histórico.
-     */
-    function showHistoricoEditModal(historicoId) {
-        const historico = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar].find(h => h.ID_Historico_Web === historicoId);
-        if (!historico) return;
-        historicoEditContext = historico;
-        
-        const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
-        document.getElementById('historico-modal-ativo-name').textContent = ativo ? ativo.Nome_Ativo : 'Desconhecido';
-        
-        const radios = document.querySelectorAll('input[name="edit-billing-type"]');
-        radios.forEach(r => r.checked = r.value === historico.Tipo_Faturamento);
-        
-        const inputsHora = document.getElementById('edit-date-inputs-hora');
-        const inputsDiaria = document.getElementById('edit-date-inputs-diaria');
-        inputsHora.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'hora');
-        inputsDiaria.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'diaria');
-
-        if (historico.Tipo_Faturamento === 'hora') {
-            document.getElementById('edit-start-time-input').value = toLocalISOString(new Date(historico.Inicio_Historico)).substring(0, 16);
-            document.getElementById('edit-end-time-input').value = toLocalISOString(new Date(historico.Fim_Historico)).substring(0, 16);
-        } else {
-            document.getElementById('edit-start-date-input').value = historico.Inicio_Historico.substring(0, 10);
-            document.getElementById('edit-end-date-input').value = historico.Fim_Historico.substring(0, 10);
-        }
-        
-        document.getElementById('historico-modal-error').textContent = '';
-        historicoEditModal.classList.remove('is-hidden');
-    }
-
-    function hideHistoricoEditModal() {
-        historicoEditContext = null;
-        historicoEditModal.classList.add('is-hidden');
     }
 
     /**
-     * Valida e salva a edição de um histórico (localmente).
+     * Renderiza o painel de CRM (se houver)
      */
-    function handleHistoricoEditSave() {
-        const errorEl = document.getElementById('historico-modal-error');
-        errorEl.textContent = '';
-        const billingType = document.querySelector('input[name="edit-billing-type"]:checked').value;
-        const ativo = dataAtivos.find(a => a.ID_Ativo === historicoEditContext.ID_Ativo);
-        let start, end, duracao, valor, valorCalculado, inicioISO, fimISO;
-
-        if (billingType === 'hora') {
-            start = document.getElementById('edit-start-time-input').value; end = document.getElementById('edit-end-time-input').value;
-            if (!start || !end) { errorEl.textContent = "Preencha início e fim."; return; }
-            const startDate = new Date(start); const endDate = new Date(end);
-            if (startDate >= endDate) { errorEl.textContent = "Fim deve ser posterior ao início."; return; }
-            valor = ativo['Valor Hora'];
-            if (valor === null || valor === undefined) { errorEl.textContent = "Este ativo não possui 'Valor Hora'."; return; }
-            duracao = (endDate - startDate) / 36e5; valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
-        } else {
-            start = document.getElementById('edit-start-date-input').value; end = document.getElementById('edit-end-date-input').value;
-            if (!start || !end) { errorEl.textContent = "Preencha as datas de início e fim."; return; }
-            const startDate = new Date(start + 'T00:00:00-03:00'); 
-            const endDate = new Date(end + 'T23:59:59-03:00');
-            if (startDate > endDate) { errorEl.textContent = "Fim deve ser igual ou posterior ao início."; return; }
-            valor = ativo['Valor Diária'];
-            if (valor === null || valor === undefined) { errorEl.textContent = "Este ativo não possui 'Valor Diária'."; return; }
-            duracao = Math.round((endDate - startDate) / MS_PER_DAY);
-            valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
-        }
-        
-        if (!checkAvailability(dataHistoricos, ativo.ID_Ativo, inicioISO, fimISO, historicoEditContext.ID_Historico_Web)) { 
-            errorEl.textContent = "Conflito de agendamento detectado."; 
-            return; 
-        }
-        
-        const updatedHistorico = { ...historicoEditContext, Inicio_Historico: inicioISO, Fim_Historico: fimISO, Tipo_Faturamento: billingType, Valor_Calculado: valorCalculado, Duracao_Faturada: duracao };
-
-        // Atualiza o histórico no array apropriado (criar ou atualizar)
-        const indexCriar = historicosParaCriar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
-        if(indexCriar > -1) {
-            historicosParaCriar[indexCriar] = updatedHistorico;
-        } else {
-            const indexAtualizar = historicosParaAtualizar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
-            if (indexAtualizar > -1) {
-                historicosParaAtualizar[indexAtualizar] = updatedHistorico;
+    function renderCrmPanel() {
+        crmInfoContainer.innerHTML = '';
+        if (currentOS && currentOS.ID_CRM && currentOS.ID_CRM !== 'SEM CRM') {
+            const crm = dataCRM.find(c => c.ID_CRM_Notion === currentOS.ID_CRM);
+            if (crm) {
+                crmInfoContainer.innerHTML = `
+                    <div class="detail-item"><strong>Nome</strong> ${crm.Nome_CRM || 'N/D'}</div>
+                    <div class="detail-item"><strong>Telefone</strong> ${crm.Telefone || 'N/D'}</div>
+                    <div class="detail-item"><strong>E-mail</strong> ${crm.Email || 'N/D'}</div>
+                    <div class="detail-item"><strong>CPF/CNPJ</strong> ${crm['CPF-CNPJ'] || 'N/D'}</div>
+                    <div class="detail-item"><strong>Site</strong> ${crm.Site || 'N/D'}</div>
+                    <div class="detail-item" style="grid-column: 1 / -1;"><strong>Endereço</strong> ${crm.Endereco_Completo || 'Nenhum endereço fornecido.'}</div>
+                `;
+                crmPanel.classList.remove('is-hidden');
             } else {
-                historicosParaAtualizar.push(updatedHistorico);
+                crmPanel.classList.add('is-hidden');
             }
+        } else {
+            crmPanel.classList.add('is-hidden');
         }
+    }
+
+    /**
+     * Renderiza toda a página de detalhes
+     */
+    function renderDetails() {
+        if (!currentOS) return;
+        osDetailsTitle.textContent = `Detalhes da ${currentOS.Nome_OS}`;
         
-        hideHistoricoEditModal();
-        renderDetails();
+        renderCrmPanel();
+        renderAlocadosList();
+        updateFinancialSummary();
+        updateSaveButtonState();
     }
 
 
-    // --- EVENT LISTENERS ---
+    // --- LÓGICA DE EVENTOS ---
 
-    // Navegação
-    backBtn.addEventListener('click', () => {
-        window.location.href = 'os.html';
-    });
-
-    // Mudar tipo de faturamento (Hora/Diária)
-    billingTypeRadios.forEach(radio => radio.addEventListener('change', (e) => {
-        currentBillingType = e.target.value;
-        document.getElementById('date-inputs-hora').classList.toggle('is-hidden', currentBillingType !== 'hora');
-        document.getElementById('date-inputs-diaria').classList.toggle('is-hidden', currentBillingType !== 'diaria');
-    }));
-
-    // Autocomplete da busca de ativos
-    searchInput.addEventListener('input', () => { 
-        const query = searchInput.value.toLowerCase(); 
-        suggestionsContainer.innerHTML = ''; 
-        if (!query) { 
-            selectedAtivoId = null; 
-            return; 
-        } 
-        dataAtivos
-            .filter(a => a.Nome_Ativo.toLowerCase().includes(query) && a.Situação === '01 - Ativo')
-            .slice(0, 10) // Limita a 10 sugestões
-            .forEach(a => { 
-                const div = document.createElement('div'); 
-                div.textContent = a.Nome_Ativo; 
-                div.addEventListener('click', () => { 
-                    searchInput.value = a.Nome_Ativo; 
-                    selectedAtivoId = a.ID_Ativo; 
-                    suggestionsContainer.innerHTML = ''; 
-                }); 
-                suggestionsContainer.appendChild(div); 
-            }); 
-    });
-
-    /**
-     * Adiciona um ativo à lista local (historicosParaCriar).
-     */
+    // Adicionar Ativo
     addAtivoBtn.addEventListener('click', () => {
         errorMessage.textContent = '';
         if (!selectedAtivoId) { errorMessage.textContent = "Por favor, selecione um ativo."; return; }
+        
         const ativo = dataAtivos.find(a => a.ID_Ativo === selectedAtivoId);
         let start, end, duracao, valor, valorCalculado, inicioISO, fimISO;
 
-        if (currentBillingType === 'hora') {
-            start = document.getElementById('start-time-input').value; end = document.getElementById('end-time-input').value;
-            if (!start || !end) { errorMessage.textContent = "Preencha as datas e horas de início e fim."; return; }
-            const startDate = new Date(start); const endDate = new Date(end);
-            if (startDate >= endDate) { errorMessage.textContent = "A data de fim deve ser posterior à de início."; return; }
-            valor = ativo['Valor Hora'];
-            if (valor === null || valor === undefined) { errorMessage.textContent = "Este ativo não possui 'Valor Hora' definido."; return; }
-            duracao = ((endDate - startDate) / 36e5); valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
-        } else { 
-            start = document.getElementById('start-date-input').value; end = document.getElementById('end-date-input').value;
-            if (!start || !end) { errorMessage.textContent = "Preencha as datas de início e fim."; return; }
-            const startDate = new Date(start + 'T00:00:00-03:00'); 
-            const endDate = new Date(end + 'T23:59:59-03:00');
-            if (startDate > endDate) { errorMessage.textContent = "A data de fim deve ser igual ou posterior à de início."; return; }
-            valor = ativo['Valor Diária'];
-            if (valor === null || valor === undefined) { errorMessage.textContent = "Este ativo não possui 'Valor Diária' definido."; return; }
-            duracao = Math.round((endDate - startDate) / MS_PER_DAY);
-            valorCalculado = duracao * valor; inicioISO = startDate.toISOString(); fimISO = endDate.toISOString();
-        }
+        try {
+            if (currentBillingType === 'hora') {
+                start = document.getElementById('start-time-input').value; 
+                end = document.getElementById('end-time-input').value;
+                if (!start || !end) { throw new Error("Preencha as datas e horas de início e fim."); }
+                
+                const startDate = new Date(start); const endDate = new Date(end);
+                if (startDate >= endDate) { throw new Error("A data de fim deve ser posterior à de início."); }
+                
+                valor = ativo['Valor Hora'];
+                if (valor === null || valor === undefined) { throw new Error("Este ativo não possui 'Valor Hora' definido."); }
+                
+                duracao = ((endDate - startDate) / 36e5); 
+                valorCalculado = duracao * valor; 
+                inicioISO = startDate.toISOString(); 
+                fimISO = endDate.toISOString();
+            
+            } else { // Diária
+                start = document.getElementById('start-date-input').value; 
+                end = document.getElementById('end-date-input').value;
+                if (!start || !end) { throw new Error("Preencha as datas de início e fim."); }
+                
+                // Trata as datas como T00:00 no fuso local para evitar problemas
+                const startDate = new Date(start + 'T00:00:00'); 
+                const endDate = new Date(end + 'T00:00:00');
+                
+                if (startDate > endDate) { throw new Error("A data de fim deve ser igual ou posterior à de início."); }
 
-        if (!checkAvailability(dataHistoricos, selectedAtivoId, inicioISO, fimISO)) { 
-            errorMessage.textContent = "Erro: Ativo já alocado neste período."; 
-            return; 
-        }
+                valor = ativo['Valor Diária'];
+                if (valor === null || valor === undefined) { throw new Error("Este ativo não possui 'Valor Diária' definido."); }
+                
+                // Cálculo de diárias (ex: 13/10 a 16/10 = 4 dias)
+                // Math.round para evitar problemas com horário de verão
+                duracao = Math.round((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1;
+                
+                valorCalculado = duracao * valor; 
+                inicioISO = startDate.toISOString();
+                
+                // Salva o fim do dia
+                const endDateFim = new Date(end + 'T23:59:59');
+                fimISO = endDateFim.toISOString();
+            }
 
-        historicosParaCriar.push({ 
-            ID_Historico_Web: 'hist-' + Date.now(), 
-            ID_Ativo: selectedAtivoId, 
-            ID_OS_Vinculada: currentOSId, 
-            Inicio_Historico: inicioISO, 
-            Fim_Historico: fimISO, 
-            Tipo_Faturamento: currentBillingType, 
-            Valor_Calculado: valorCalculado, 
-            Duracao_Faturada: duracao 
-        });
-        
-        // Limpa o formulário
-        searchInput.value = ''; selectedAtivoId = null; 
-        document.getElementById('start-time-input').value = ''; 
-        document.getElementById('end-time-input').value = ''; 
-        document.getElementById('start-date-input').value = ''; 
-        document.getElementById('end-date-input').value = ''; 
-        suggestionsContainer.innerHTML = '';
-        
-        renderDetails();
+            // Unifica os dados de histórico (cache + pendentes) para checagem
+            const todosHistoricos = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar];
+            
+            if (!checkAvailability(todosHistoricos, selectedAtivoId, inicioISO, fimISO)) { 
+                throw new Error("Erro: Ativo já alocado neste período."); 
+            }
+            
+            // Adiciona à lista de "pendentes para criar"
+            historicosParaCriar.push({ 
+                ID_Historico_Web: 'hist-' + Date.now(), 
+                ID_Ativo: selectedAtivoId, 
+                ID_OS_Vinculada: currentOSId, 
+                Inicio_Historico: inicioISO, 
+                Fim_Historico: fimISO, 
+                Tipo_Faturamento: currentBillingType, 
+                Valor_Calculado: valorCalculado, 
+                Duracao_Faturada: duracao 
+            });
+
+            // Limpa o formulário
+            searchInput.value = ''; 
+            selectedAtivoId = null; 
+            document.getElementById('start-time-input').value = ''; 
+            document.getElementById('end-time-input').value = ''; 
+            document.getElementById('start-date-input').value = ''; 
+            document.getElementById('end-date-input').value = ''; 
+            suggestionsContainer.innerHTML = '';
+            
+            // Re-renderiza tudo
+            renderDetails();
+
+        } catch (error) {
+            errorMessage.textContent = error.message;
+        }
     });
 
-    /**
-     * Remove um histórico da lista local (ou adiciona à lista de apagar).
-     */
+    // Remover Histórico
     function handleRemoveHistorico(event) {
         const historicoId = event.target.dataset.historicoId;
         
-        // Se estava na lista de "criar", apenas remove dela
+        // 1. Se estava na lista "Para Criar", apenas remova de lá
         let index = historicosParaCriar.findIndex(h => h.ID_Historico_Web === historicoId);
         if (index > -1) {
             historicosParaCriar.splice(index, 1);
         } else {
-            // Se estava na lista de "atualizar", remove dela
+            // 2. Se estava na lista "Para Atualizar", remova de lá
             index = historicosParaAtualizar.findIndex(h => h.ID_Historico_Web === historicoId);
             if (index > -1) {
                 historicosParaAtualizar.splice(index, 1);
             }
-            // Se era um item original, adiciona na lista para apagar
+            
+            // 3. Adiciona na lista "Para Apagar" (se for um item original)
             const historicoOriginal = dataHistoricos.find(h => h.ID_Historico_Web === historicoId);
-            if (historicoOriginal) {
+            if (historicoOriginal && !historicosParaApagar.find(h => h.ID_Historico_Web === historicoId)) {
                 historicosParaApagar.push(historicoOriginal);
             }
         }
+        
         renderDetails();
     }
 
-    // Botão "Salvar Históricos no Notion"
+    // Salvar Lote de Históricos no Notion
     saveOSBtn.addEventListener('click', async () => {
         saveStatus.textContent = 'A salvar alterações...'; 
         saveStatus.className = ''; 
@@ -430,44 +350,38 @@ document.addEventListener('DOMContentLoaded', () => {
             ...historicosParaAtualizar.map(h => ({ acao: "update", ...mapToPayload(h) }))
         ];
 
-        const success = await handleSaveHistoricos(payload);
+        const success = await handleSaveHistoricos(payload); // De common.js
 
         if (success) {
-            saveStatus.textContent = 'Alterações salvas com sucesso!';
+            saveStatus.textContent = 'Alterações salvas com sucesso!'; 
             saveStatus.className = 'success';
-            // Reseta o estado local
+            
+            // Limpa o "staging" local
             historicosParaCriar = [];
             historicosParaApagar = [];
             historicosParaAtualizar = [];
-            // Recarrega os dados (do cache atualizado)
+            
+            // Recarrega os dados (o cache foi atualizado por handleSaveHistoricos)
             const data = await fetchAllData();
             dataHistoricos = data.dataHistoricos;
-        } else {
-            saveStatus.textContent = 'Falha ao salvar. Tente novamente.';
+            
+            renderDetails();
+
+        } else { // 'success' é false
+            saveStatus.textContent = 'Falha ao salvar. Tente novamente.'; 
             saveStatus.className = 'error';
+            saveOSBtn.disabled = false; // Permite tentar de novo
         }
-        
-        renderDetails();
     });
 
-    // --- Listeners dos Modais ---
-    
-    // Modal de Edição de OS
+    // --- LÓGICA DE MODAIS ---
+
+    // Editar OS (Modal)
     editOSDetailsBtn.addEventListener('click', () => {
-        showOSModal('update', currentOS, handleEditOSSaveClick);
-    });
-    osModalCloseBtn.addEventListener('click', hideOSModal);
-    osModalCancelBtn.addEventListener('click', hideOSModal);
-    osModal.addEventListener('click', (e) => { if (e.target === osModal) hideOSModal(); });
-    osModalDiscountInput.addEventListener('input', (e) => {
-        const rawValue = e.target.value.replace(/\D/g, '');
-        e.target.value = formatCurrency(Number(rawValue) / 100);
+        showOSModal('update', currentOS, handleSaveOSEditClick); // de common.js
     });
 
-    /**
-     * Callback para salvar a edição da OS (nome, desconto).
-     */
-    async function handleEditOSSaveClick(payload) {
+    async function handleSaveOSEditClick(payload) {
         const osModalSaveBtn = document.getElementById('os-modal-save-btn');
         const osModalError = document.getElementById('os-modal-error');
         
@@ -475,11 +389,11 @@ document.addEventListener('DOMContentLoaded', () => {
         osModalSaveBtn.textContent = 'A salvar...';
         osModalError.textContent = '';
 
-        const success = await handleSaveOS(payload);
+        const success = await handleSaveOS(payload); // de common.js
 
         if (success) {
             hideOSModal();
-            // Recarrega os dados e atualiza a página
+            // Recarrega os dados (cache foi atualizado)
             const { dataOS: newDataOS } = await fetchAllData();
             dataOS = newDataOS;
             currentOS = dataOS.find(o => o.ID_OS === currentOSId);
@@ -491,54 +405,185 @@ document.addEventListener('DOMContentLoaded', () => {
         osModalSaveBtn.disabled = false;
         osModalSaveBtn.textContent = 'Salvar';
     }
-    
-    // Modal de Edição de Histórico
+
+    osModalCloseBtn.addEventListener('click', hideOSModal);
+    osModalCancelBtn.addEventListener('click', hideOSModal);
+    osModal.addEventListener('click', (e) => { if (e.target === osModal) hideOSModal(); });
+    osModalDiscountInput.addEventListener('input', (e) => {
+        const rawValue = e.target.value.replace(/\D/g, '');
+        e.target.value = formatCurrency(Number(rawValue) / 100);
+    });
+
+    // Editar Histórico (Modal)
+    function showHistoricoEditModal(historicoId) {
+        // Busca em todos os locais (cache, criar, atualizar)
+        const historico = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar].find(h => h.ID_Historico_Web === historicoId);
+        if (!historico) return;
+        
+        historicoEditContext = historico;
+        
+        const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
+        document.getElementById('historico-modal-ativo-name').textContent = ativo ? ativo.Nome_Ativo : 'Desconhecido';
+        
+        const radios = document.querySelectorAll('input[name="edit-billing-type"]');
+        radios.forEach(r => r.checked = r.value === historico.Tipo_Faturamento);
+        
+        const inputsHora = document.getElementById('edit-date-inputs-hora');
+        const inputsDiaria = document.getElementById('edit-date-inputs-diaria');
+        inputsHora.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'hora');
+        inputsDiaria.classList.toggle('is-hidden', historico.Tipo_Faturamento !== 'diaria');
+
+        if (historico.Tipo_Faturamento === 'hora') {
+            document.getElementById('edit-start-time-input').value = toLocalISOString(new Date(historico.Inicio_Historico)).substring(0, 16);
+            document.getElementById('edit-end-time-input').value = toLocalISOString(new Date(historico.Fim_Historico)).substring(0, 16);
+        } else {
+            document.getElementById('edit-start-date-input').value = new Date(historico.Inicio_Historico).toISOString().substring(0, 10);
+            document.getElementById('edit-end-date-input').value = new Date(historico.Fim_Historico).toISOString().substring(0, 10);
+        }
+        
+        document.getElementById('historico-modal-error').textContent = '';
+        historicoEditModal.classList.remove('is-hidden');
+    }
+
+    function hideHistoricoEditModal() {
+        historicoEditContext = null; 
+        historicoEditModal.classList.add('is-hidden'); 
+    }
+
     historicoModalCloseBtn.addEventListener('click', hideHistoricoEditModal);
     historicoModalCancelBtn.addEventListener('click', hideHistoricoEditModal);
-    historicoModalSaveBtn.addEventListener('click', handleHistoricoEditSave);
+    
+    // Salvar Edição de Histórico
+    historicoModalSaveBtn.addEventListener('click', () => {
+        const errorEl = document.getElementById('historico-modal-error');
+        errorEl.textContent = '';
+        const billingType = document.querySelector('input[name="edit-billing-type"]:checked').value;
+        const ativo = dataAtivos.find(a => a.ID_Ativo === historicoEditContext.ID_Ativo);
+        let start, end, duracao, valor, valorCalculado, inicioISO, fimISO;
+
+        try {
+            if (billingType === 'hora') {
+                start = document.getElementById('edit-start-time-input').value; 
+                end = document.getElementById('edit-end-time-input').value;
+                if (!start || !end) { throw new Error("Preencha início e fim."); }
+                
+                const startDate = new Date(start); const endDate = new Date(end);
+                if (startDate >= endDate) { throw new Error("Fim deve ser posterior ao início."); }
+                
+                valor = ativo['Valor Hora'];
+                if (valor === null || valor === undefined) { throw new Error("Este ativo não possui 'Valor Hora'."); }
+                
+                duracao = (endDate - startDate) / 36e5; 
+                valorCalculado = duracao * valor; 
+                inicioISO = startDate.toISOString(); 
+                fimISO = endDate.toISOString();
+            
+            } else {
+                start = document.getElementById('edit-start-date-input').value; 
+                end = document.getElementById('edit-end-date-input').value;
+                if (!start || !end) { throw new Error("Preencha as datas de início e fim."); }
+                
+                const startDate = new Date(start + 'T00:00:00'); 
+                const endDate = new Date(end + 'T00:00:00');
+                if (startDate > endDate) { throw new Error("Fim deve ser igual ou posterior ao início."); }
+                
+                valor = ativo['Valor Diária'];
+                if (valor === null || valor === undefined) { throw new Error("Este ativo não possui 'Valor Diária'."); }
+                
+                duracao = Math.round((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1;
+                valorCalculado = duracao * valor; 
+                inicioISO = startDate.toISOString();
+                
+                const endDateFim = new Date(end + 'T23:59:59');
+                fimISO = endDateFim.toISOString();
+            }
+
+            const todosHistoricos = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar];
+            if (!checkAvailability(todosHistoricos, ativo.ID_Ativo, inicioISO, fimISO, historicoEditContext.ID_Historico_Web)) { 
+                throw new Error("Conflito de agendamento detectado."); 
+            }
+            
+            // Histórico atualizado
+            const updatedHistorico = { 
+                ...historicoEditContext, 
+                Inicio_Historico: inicioISO, 
+                Fim_Historico: fimISO, 
+                Tipo_Faturamento: billingType, 
+                Valor_Calculado: valorCalculado, 
+                Duracao_Faturada: duracao 
+            };
+
+            // Atualiza o "staging"
+            // 1. Se estava em "Para Criar", apenas atualize lá
+            const indexCriar = historicosParaCriar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
+            if(indexCriar > -1) {
+                historicosParaCriar[indexCriar] = updatedHistorico;
+            } else {
+                // 2. Se estava em "Para Atualizar", atualize lá
+                const indexAtualizar = historicosParaAtualizar.findIndex(h => h.ID_Historico_Web === updatedHistorico.ID_Historico_Web);
+                if (indexAtualizar > -1) {
+                    historicosParaAtualizar[indexAtualizar] = updatedHistorico;
+                } else {
+                    // 3. Senão, adicione em "Para Atualizar"
+                    historicosParaAtualizar.push(updatedHistorico);
+                }
+            }
+            
+            hideHistoricoEditModal();
+            renderDetails();
+
+        } catch (error) {
+            errorEl.textContent = error.message;
+        }
+    });
 
 
-    // --- GERAÇÃO DE PDF ---
+    // --- LÓGICA DE PDF ---
     async function generatePDF() {
         if (!currentOS) return;
-
+        
         generatePdfBtn.textContent = 'Gerando...';
         generatePdfBtn.disabled = true;
 
         const printableContent = document.createElement('div');
-        // ... (Estilização do 'printableContent' como no original)
         printableContent.style.position = 'absolute';
         printableContent.style.left = '-9999px';
-        printableContent.style.width = '210mm';
+        printableContent.style.width = '210mm'; // A4 width
         printableContent.style.padding = '15mm';
         printableContent.style.backgroundColor = 'white';
-        printableContent.style.fontFamily = 'Arial, sans-serif';
+        printableContent.style.fontFamily = 'Inter, sans-serif'; // Usa a nova fonte
         printableContent.style.fontSize = '12px';
-        printableContent.style.color = '#333';
+        printableContent.style.color = '#1D1C1B';
         printableContent.style.boxSizing = 'border-box';
         
-        const crm = dataCRM.find(c => c.ID_CRM_Notion === currentOS.ID_CRM);
-        const historicosVisiveis = [...dataHistoricos, ...historicosParaCriar, ...historicosParaAtualizar].filter(h => h.ID_OS_Vinculada === currentOSId && !historicosParaApagar.some(del => del.ID_Historico_Web === h.ID_Historico_Web));
+        const crm = currentOS.ID_CRM && currentOS.ID_CRM !== 'SEM CRM' ? dataCRM.find(c => c.ID_CRM_Notion === currentOS.ID_CRM) : null;
         
+        // Pega todos os históricos visíveis (incluindo pendentes)
+        const idsApagados = historicosParaApagar.map(h => h.ID_Historico_Web);
+        const idsAtualizados = historicosParaAtualizar.map(h => h.ID_Historico_Web);
+        const historicosBase = dataHistoricos.filter(h => h.ID_OS_Vinculada === currentOSId && !idsApagados.includes(h.ID_Historico_Web) && !idsAtualizados.includes(h.ID_Historico_Web));
+        const historicosVisiveis = [...historicosBase, ...historicosParaCriar.filter(h => h.ID_OS_Vinculada === currentOSId), ...historicosParaAtualizar.filter(h => h.ID_OS_Vinculada === currentOSId)];
+
         const grossValue = calculateGrossValue(currentOSId, dataHistoricos, historicosParaCriar, historicosParaApagar, historicosParaAtualizar);
         const discountValue = currentOS.Desconto_OS || 0;
         const finalTotal = grossValue - discountValue;
 
-        // ... (Construção do `pdfHtml` exatamente como no original)
         let pdfHtml = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                <h1 style="margin: 0; color: #007bff; font-size: 24px;">Agoora Hub</h1>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1D1C1B; padding-bottom: 10px;">
+                <h1 style="margin: 0; color: #FF4E00; font-size: 24px; font-family: 'Bricolage Grotesque', sans-serif;">Agoora Hub</h1>
                 <div style="text-align: right;">
-                    <h2 style="margin: 0; font-size: 20px;">Ordem de Serviço</h2>
+                    <h2 style="margin: 0; font-size: 20px; font-family: 'Bricolage Grotesque', sans-serif;">Ordem de Serviço</h2>
                     <p style="margin: 5px 0 0;">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
             </div>
-            <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px;">${currentOS.Nome_OS}</h3>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #D4E7E6; padding-bottom: 5px; font-size: 16px; font-family: 'Bricolage Grotesque', sans-serif;">${currentOS.Nome_OS}</h3>
         `;
+
         if (crm) {
             pdfHtml += `
-                <div style="margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee;">
-                    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">Dados do Cliente</h4>
+                <div style="margin-top: 20px; background-color: #FFF9F3; padding: 15px; border-radius: 5px; border: 1px solid #D4E7E6;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; font-family: 'Bricolage Grotesque', sans-serif;">Dados do Cliente</h4>
                     <p style="margin: 4px 0;"><strong>Nome:</strong> ${crm.Nome_CRM || 'N/D'}</p>
                     <p style="margin: 4px 0;"><strong>Telefone:</strong> ${crm.Telefone || 'N/D'}</p>
                     <p style="margin: 4px 0;"><strong>E-mail:</strong> ${crm.Email || 'N/D'}</p>
@@ -546,7 +591,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        pdfHtml += `<h3 style="margin-top: 30px; font-size: 16px;">Itens da OS</h3>`;
+
+        pdfHtml += `<h3 style="margin-top: 30px; font-size: 16px; font-family: 'Bricolage Grotesque', sans-serif;">Itens da OS</h3>`;
+        
         const groupedByClassification = historicosVisiveis.reduce((acc, historico) => {
             const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
             const classification = (ativo && ativo.Classificacao) ? ativo.Classificacao : 'Sem Classificação';
@@ -554,14 +601,16 @@ document.addEventListener('DOMContentLoaded', () => {
             acc[classification].push(historico);
             return acc;
         }, {});
+
         const sortedClassifications = Object.keys(groupedByClassification).sort((a, b) => {
-            const order = { 'Local': 1, 'Profissional': 2 };
+            const order = { 'Local Físico': 1, 'Profissional': 2 };
             const aOrder = order[a] || 3, bOrder = order[b] || 3;
             if (aOrder !== bOrder) return aOrder - bOrder;
             return a.localeCompare(b);
         });
+
         sortedClassifications.forEach(classification => {
-            pdfHtml += `<h4 style="margin-top: 20px; font-style: italic; color: #555; font-size: 14px;">${classification}</h4>`;
+            pdfHtml += `<h4 style="margin-top: 20px; font-style: italic; color: #555; font-size: 14px; font-family: 'Bricolage Grotesque', sans-serif;">${classification}</h4>`;
             pdfHtml += `<table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
                         <thead>
                             <tr style="background-color: #eee;">
@@ -571,6 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </tr>
                         </thead>
                         <tbody>`;
+            
             const historicosDoGrupo = groupedByClassification[classification];
             historicosDoGrupo.forEach(historico => {
                 const ativo = dataAtivos.find(a => a.ID_Ativo === historico.ID_Ativo);
@@ -579,20 +629,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 let periodoHtml = (historico.Tipo_Faturamento === 'hora')
                     ? `${formatDate(start)} - ${formatDate(end)}`
                     : `${formatDateOnly(start)} - ${formatDateOnly(end)}`;
+                
                 pdfHtml += `<tr>
                             <td style="padding: 8px; border-bottom: 1px solid #eee;">${ativo.Nome_Ativo}</td>
                             <td style="padding: 8px; border-bottom: 1px solid #eee;">${periodoHtml}</td>
                             <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(historico.Valor_Calculado)}</td>
                             </tr>`;
             });
+
             pdfHtml += `</tbody></table>`;
         });
+
         pdfHtml += `
             <div style="margin-top: 40px; page-break-inside: avoid; text-align: right;">
                 <table style="display: inline-block; border-top: 2px solid #333; padding-top: 10px; font-size: 12px;">
-                    <tr><td style="padding: 5px 10px;">Valor Bruto:</td><td style="padding: 5px 10px; text-align: right;">${formatCurrency(grossValue)}</td></tr>
-                    <tr><td style="padding: 5px 10px;">Desconto:</td><td style="padding: 5px 10px; text-align: right;">${formatCurrency(discountValue)}</td></tr>
-                    <tr style="font-weight: bold; font-size: 1.2em;"><td style="padding: 10px;">Valor Total:</td><td style="padding: 10px; text-align: right;">${formatCurrency(finalTotal)}</td></tr>
+                    <tr>
+                        <td style="padding: 5px 10px;">Valor Bruto:</td>
+                        <td style="padding: 5px 10px; text-align: right;">${formatCurrency(grossValue)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 10px;">Desconto:</td>
+                        <td style="padding: 5px 10px; text-align: right;">${formatCurrency(discountValue)}</td>
+                    </tr>
+                    <tr style="font-weight: bold; font-size: 1.2em; font-family: 'Bricolage Grotesque', sans-serif;">
+                        <td style="padding: 10px;">Valor Total:</td>
+                        <td style="padding: 10px; text-align: right;">${formatCurrency(finalTotal)}</td>
+                    </tr>
                 </table>
             </div>
         `;
@@ -601,12 +663,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(printableContent);
 
         try {
-            const canvas = await html2canvas(printableContent, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
             
+            // Usar html2canvas para renderizar o HTML
+            const canvas = await html2canvas(printableContent, {
+                scale: 2, // Melhor resolução
+                useCORS: true // Se houver imagens
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             
@@ -615,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch(e) {
             console.error("Erro ao gerar PDF:", e);
-            // Não use alert, apenas log
+            alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
         } finally {
             document.body.removeChild(printableContent);
             generatePdfBtn.textContent = 'Gerar PDF';
@@ -627,37 +693,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- INICIALIZAÇÃO DA PÁGINA ---
-    async function initializePage() {
-        // Pega o ID da URL
-        currentOSId = getIdFromUrl();
-        if (!currentOSId) {
-            alert("Nenhuma OS selecionada. Redirecionando para o painel.");
-            window.location.href = 'os.html';
-            return;
-        }
+    
+    backBtn.addEventListener('click', () => {
+        window.location.href = 'os.html';
+    });
 
+    // Filtro de Ativos
+    searchInput.addEventListener('input', () => { 
+        const query = searchInput.value.toLowerCase(); 
+        suggestionsContainer.innerHTML = ''; 
+        if (!query) { 
+            selectedAtivoId = null; 
+            return; 
+        } 
+        dataAtivos
+            .filter(a => a.Nome_Ativo.toLowerCase().includes(query) && a.Situação === '01 - Ativo')
+            .forEach(a => { 
+                const div = document.createElement('div'); 
+                div.textContent = a.Nome_Ativo; 
+                div.addEventListener('click', () => { 
+                    searchInput.value = a.Nome_Ativo; 
+                    selectedAtivoId = a.ID_Ativo; 
+                    suggestionsContainer.innerHTML = ''; 
+                }); 
+                suggestionsContainer.appendChild(div); 
+            }); 
+    });
+
+    // Toggle de Faturamento
+    billingTypeRadios.forEach(radio => radio.addEventListener('change', (e) => {
+        currentBillingType = e.target.value;
+        document.getElementById('date-inputs-hora').classList.toggle('is-hidden', currentBillingType !== 'hora');
+        document.getElementById('date-inputs-diaria').classList.toggle('is-hidden', currentBillingType !== 'diaria');
+    }));
+
+    /**
+     * Ponto de entrada da página
+     */
+    async function initializePage() {
         try {
-            // Carrega todos os dados (do cache ou da API)
-            const data = await fetchAllData();
+            currentOSId = getIdFromUrl(); // de common.js
+            if (!currentOSId) {
+                alert("ID da Ordem de Serviço não encontrado.");
+                window.location.href = 'os.html';
+                return;
+            }
+
+            const data = await fetchAllData(); // de common.js
             dataOS = data.dataOS;
             dataAtivos = data.dataAtivos;
             dataHistoricos = data.dataHistoricos;
             dataCRM = data.dataCRM;
-            
-            // Define a OS atual
-            currentOS = dataOS.find(o => o.ID_OS === currentOSId);
 
+            currentOS = dataOS.find(o => o.ID_OS === currentOSId);
             if (!currentOS) {
-                 alert("OS não encontrada. Redirecionando para o painel.");
+                alert("Ordem de Serviço não encontrada.");
                 window.location.href = 'os.html';
                 return;
             }
-            
-            // Renderiza a página
+
+            // Agora que os dados estão carregados, renderiza tudo
             renderDetails();
 
         } catch (error) {
-            document.getElementById('details-view').innerHTML = `<p class="error-message">Não foi possível carregar os dados. Verifique a sua ligação ou os endpoints dos webhooks. <a href="os.html">Voltar ao Painel</a></p>`;
+            console.error(error);
+            mainView.innerHTML = `<p class="error-message">Não foi possível carregar os dados. Verifique a sua ligação ou os endpoints dos webhooks.</p>`;
         }
     }
 

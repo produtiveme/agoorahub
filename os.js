@@ -1,23 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- ESTADO LOCAL DA PÁGINA ---
+
+    // --- DADOS GLOBAIS (do cache) ---
     let dataOS = [];
+    let dataAtivos = [];
     let dataHistoricos = [];
     let dataCRM = [];
 
     // --- ELEMENTOS DO DOM ---
     const osListContainer = document.getElementById('os-list');
     const createOSBtn = document.getElementById('create-new-os-btn');
-    
-    // Elementos do Modal de OS
     const osModal = document.getElementById('os-modal');
     const osModalCloseBtn = document.getElementById('os-modal-close-btn');
     const osModalCancelBtn = document.getElementById('os-modal-cancel-btn');
     const osModalDiscountInput = document.getElementById('os-modal-discount-input');
-    const osModalSaveBtn = document.getElementById('os-modal-save-btn'); // O listener de save é adicionado em showOSModal
 
-    // --- RENDERIZAÇÃO ---
-
+    /**
+     * Renderiza o painel principal de Ordens de Serviço
+     */
     function renderDashboard() {
         osListContainer.innerHTML = ''; // Limpa os skeletons
         
@@ -28,9 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dataOS.forEach(os => {
             // Calcula o valor bruto baseado nos históricos carregados
-            const totalValue = dataHistoricos
-                .filter(h => h.ID_OS_Vinculada === os.ID_OS)
-                .reduce((total, h) => total + (h.Valor_Calculado || 0), 0);
+            // ATUALIZADO: Agora usa a função de `common.js`.
+            // Note que não passamos os arrays de "pendentes", pois este painel
+            // só deve mostrar o que já está salvo (dataHistoricos).
+            const totalValue = calculateGrossValue(os.ID_OS, dataHistoricos);
             
             // Encontra o cliente (CRM)
             let crmInfoHtml = '<p><em>Nenhum CRM foi vinculado</em></p>';
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Cria o card da OS
             const osCard = document.createElement('div');
             osCard.className = 'os-card';
             osCard.innerHTML = `
@@ -58,11 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
             osListContainer.appendChild(osCard);
         });
 
-        // Adiciona listeners aos botões criados
+        // Adiciona Event Listeners aos botões criados
         osListContainer.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const osId = e.target.dataset.osId;
-                // Navega para a página de detalhes com o ID como parâmetro
                 window.location.href = `detalhe-os.html?id=${osId}`;
             });
         });
@@ -76,29 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- EVENT LISTENERS ---
-
-    // Listener para o botão de Criar Nova OS
-    createOSBtn.addEventListener('click', () => {
-        showOSModal('create', null, handleSaveOSClick);
-    });
-
-    // Listeners para fechar o modal de OS
-    osModalCloseBtn.addEventListener('click', hideOSModal);
-    osModalCancelBtn.addEventListener('click', hideOSModal);
-    osModal.addEventListener('click', (e) => {
-        if (e.target === osModal) hideOSModal();
-    });
-
-    // Formatação de input de desconto
-    osModalDiscountInput.addEventListener('input', (e) => {
-        const rawValue = e.target.value.replace(/\D/g, '');
-        e.target.value = formatCurrency(Number(rawValue) / 100);
-    });
-
     /**
-     * Função de callback passada para o modal de OS.
-     * É chamada quando o botão "Salvar" do modal é clicado.
+     * Callback para quando o modal de OS é salvo
      */
     async function handleSaveOSClick(payload) {
         const osModalSaveBtn = document.getElementById('os-modal-save-btn');
@@ -108,14 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
         osModalSaveBtn.textContent = 'A salvar...';
         osModalError.textContent = '';
 
-        const success = await handleSaveOS(payload);
+        const success = await handleSaveOS(payload); // Função de common.js
 
         if (success) {
             hideOSModal();
-            // Recarrega os dados (do cache atualizado) e renderiza novamente
-            const { dataOS: newDataOS } = await fetchAllData();
+            // Recarrega os dados (o cache foi atualizado)
+            const { dataOS: newDataOS, dataCRM: newDataCRM } = await fetchAllData();
             dataOS = newDataOS;
-            renderDashboard();
+            dataCRM = newDataCRM;
+            renderDashboard(); // Re-renderiza o painel
         } else {
             osModalError.textContent = "Não foi possível salvar. Tente novamente.";
         }
@@ -124,24 +104,35 @@ document.addEventListener('DOMContentLoaded', () => {
         osModalSaveBtn.textContent = 'Salvar';
     }
 
-
-    // --- INICIALIZAÇÃO DA PÁGINA ---
-
+    /**
+     * Inicializa a página
+     */
     async function initializePage() {
         try {
-            // Carrega todos os dados (do cache ou da API)
             const data = await fetchAllData();
             dataOS = data.dataOS;
+            dataAtivos = data.dataAtivos;
             dataHistoricos = data.dataHistoricos;
             dataCRM = data.dataCRM;
-            
-            // Renderiza o painel
             renderDashboard();
-
         } catch (error) {
+            console.error(error);
             osListContainer.innerHTML = `<p class="error-message">Não foi possível carregar os dados. Verifique a sua ligação ou os endpoints dos webhooks.</p>`;
         }
     }
+
+    // --- INICIALIZAÇÃO E EVENTOS GERAIS DO MODAL ---
+    createOSBtn.addEventListener('click', () => {
+        showOSModal('create', null, handleSaveOSClick);
+    });
+
+    osModalCloseBtn.addEventListener('click', hideOSModal);
+    osModalCancelBtn.addEventListener('click', hideOSModal);
+    osModal.addEventListener('click', (e) => { if (e.target === osModal) hideOSModal(); });
+    osModalDiscountInput.addEventListener('input', (e) => {
+        const rawValue = e.target.value.replace(/\D/g, '');
+        e.target.value = formatCurrency(Number(rawValue) / 100);
+    });
 
     initializePage();
 });
