@@ -113,6 +113,19 @@ header nav a.active {
     font-weight: bold;
 }
 
+/* --- Botão de Logout (NOVO) --- */
+header nav a.logout-btn {
+    background-color: var(--text-color);
+    color: white;
+    font-weight: bold;
+    margin-left: 1rem; /* Adiciona um espaço */
+}
+header nav a.logout-btn:hover {
+    background-color: var(--error-color);
+}
+/* --- Fim do Botão de Logout --- */
+
+
 /* --- Botões --- */
 button {
     background-color: var(--primary-color);

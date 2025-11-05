@@ -83,6 +83,60 @@ function handleLogout() {
     window.location.href = 'login.html';
 }
 
+// --- Event Listener para Logout ---
+// Adiciona um listener global que espera pelo botão de logout
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+});
+
+
+/**
+ * Um 'wrapper' para a API fetch que injeta o token JWT
+ * e lida com erros 401 (Não Autorizado) deslogando o usuário.
+ * @param {string} url - A URL da API.
+ * @param {object} options - Opções do Fetch (method, body, etc.)
+ * @returns {Promise<Response>} A resposta do fetch.
+ */
+async function secureFetch(url, options = {}) {
+    const token = getCache(CACHE_KEYS.TOKEN); // Pega o token do cache
+
+    // Clona os headers existentes ou cria um novo
+    const headers = new Headers(options.headers || {});
+
+    // Adiciona o token de autorização
+    if (token) {
+        headers.append('Authorization', `Bearer ${token}`);
+    }
+
+    // Garante que o Content-Type seja definido se houver um body
+    if (options.body && !headers.has('Content-Type')) {
+        headers.append('Content-Type', 'application/json');
+    }
+
+    const fetchOptions = {
+        ...options,
+        headers: headers
+    };
+
+    const response = await fetch(url, fetchOptions);
+
+    // Se o token expirou ou é inválido, o N8N retornará 401 (ou 403)
+    if (response.status === 401 || response.status === 403) {
+        console.error("Token inválido ou expirado. Deslogando...");
+        handleLogout(); // Desloga o usuário
+        // Lança um erro para parar a execução do .then() que chamou
+        throw new Error('Não autorizado'); 
+    }
+
+    return response;
+}
+
 
 async function fetchAllData(forceRefresh = false) {
     let dataOS = getCache(CACHE_KEYS.OS);
@@ -93,11 +147,12 @@ async function fetchAllData(forceRefresh = false) {
     if (forceRefresh || !dataOS || !dataAtivos || !dataHistoricos || !dataCRM) {
         console.log("Cache não encontrado ou 'forceRefresh' ativado. Buscando dados da API...");
         try {
+            // MODIFICADO: Troca 'fetch' por 'secureFetch'
             const results = await Promise.allSettled([
-                fetch(API_URLS.OS).then(res => res.json()),
-                fetch(API_URLS.ATIVOS).then(res => res.json()),
-                fetch(API_URLS.HISTORICOS).then(res => res.json()),
-                fetch(API_URLS.CRM).then(res => res.json())
+                secureFetch(API_URLS.OS).then(res => res.json()),
+                secureFetch(API_URLS.ATIVOS).then(res => res.json()),
+                secureFetch(API_URLS.HISTORICOS).then(res => res.json()),
+                secureFetch(API_URLS.CRM).then(res => res.json())
             ]);
 
             const [osResult, ativosResult, historicosResult, crmResult] = results;
@@ -192,9 +247,9 @@ function checkAvailability(dataHistoricos, ativoId, startTime, endTime, excludeH
 
 async function handleSaveOS(payload) {
     try {
-        const response = await fetch(API_URLS.ALTERA_OS, {
+        // MODIFICADO: Troca 'fetch' por 'secureFetch' e remove headers manuais
+        const response = await secureFetch(API_URLS.ALTERA_OS, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error('Falha ao salvar a OS.');
@@ -209,9 +264,9 @@ async function handleSaveOS(payload) {
 async function handleSaveHistoricos(payload) {
     if (payload.length === 0) return true;
     try {
-        const response = await fetch(API_URLS.ALTERA_HISTORICO, {
+        // MODIFICADO: Troca 'fetch' por 'secureFetch' e remove headers manuais
+        const response = await secureFetch(API_URLS.ALTERA_HISTORICO, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (!response.ok) { throw new Error(`Erro do servidor: ${response.statusText}`); }
