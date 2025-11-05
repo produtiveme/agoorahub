@@ -44,6 +44,7 @@ main {
     margin: 0 auto;
     width: 100%;
     flex: 1;
+    box-sizing: border-box; /* Garante que o padding não estoure a largura */
 }
 
 h1, h2, h3, h4 {
@@ -88,6 +89,7 @@ header {
 header nav {
     display: flex;
     gap: 0.5rem;
+    align-items: center; /* Centraliza verticalmente */
 }
 
 header nav a {
@@ -101,6 +103,7 @@ header nav a {
     text-decoration: none;
     font-weight: bold;
     transition: all 0.2s ease;
+    white-space: nowrap; /* Evita que o texto do link quebre */
 }
 
 header nav a:hover {
@@ -490,6 +493,11 @@ footer {
         flex-direction: column;
         gap: 1rem;
     }
+    /* AJUSTE: Centraliza os links da navegação quando quebram a linha */
+    header nav {
+        justify-content: center;
+        flex-wrap: wrap; /* Garante que a quebra ocorra */
+    }
     main {
         padding: 1rem;
     }
@@ -518,5 +526,67 @@ footer {
     }
     .modal-content {
         padding: 1.5rem;
+    }
+}
+
+/* NOVA MEDIA QUERY: Adicionada para telas de celular pequenas (abaixo de 480px) */
+@media (max-width: 480px) {
+    
+    /* Títulos e espaçamento principal */
+    h2 {
+        font-size: 1.5rem; /* Reduz o H2 */
+    }
+    main {
+        padding: 0.75rem; /* Reduz o padding principal */
+    }
+    .card {
+        padding: 1rem;
+    }
+
+    /* Força o menu de navegação a empilhar verticalmente */
+    header nav {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.25rem;
+    }
+    header nav a {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box; /* Garante que o padding seja incluído no width */
+    }
+    header nav a.logout-btn {
+        margin-left: 0; /* Remove a margem do logout */
+    }
+
+    /* Correção Crítica: Calendário (detalhe-ativo.html) */
+    .calendar-day, .calendar-day-name {
+        padding: 3px 2px; /* Muito menor */
+        font-size: 0.7rem; /* Menor */
+    }
+    .calendar-day-name {
+        font-weight: normal; /* Tira o negrito para economizar espaço */
+    }
+    .calendar-header h4 {
+        font-size: 1.1rem;
+    }
+    
+    /* Correção: Inputs de Data/Hora (detalhe-os.html) */
+    .date-time-inputs {
+        flex-direction: column; /* Força empilhamento */
+        gap: 0.75rem;
+    }
+    .date-time-inputs label {
+        flex-basis: 100%; /* Ocupa 100% da largura */
+        min-width: 0;
+    }
+
+    /* Correção: Grids de detalhes (financeiro, crm, ativo) */
+    .detail-grid, #financial-details-grid {
+        grid-template-columns: 1fr; /* Força uma única coluna */
+    }
+
+    /* Correção: Modais */
+    .modal-content {
+        padding: 1.5rem 1rem; /* Menos padding horizontal */
     }
 }
