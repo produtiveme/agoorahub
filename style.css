@@ -4,22 +4,32 @@
 /* --- Variáveis de Identidade Visual --- */
 :root {
     /* Paleta de Cores */
-    --primary-color: #FF4E00;     /* Aerospace Orange */
-    --secondary-color: #6B9E83;   /* Cambridge Blue */
-    --accent-color: #FFC280;      /* Fawn */
-    --text-color: #1D1C1B;        /* Eerie Black */
-    --text-light: #555;           /* Cinza para subtextos */
-    --background-color: #FFF9F3;  /* Sea Shell */
-    --card-bg: #FFFFFF;           /* Branco Puro */
-    --border-color: #D4E7E6;      /* Azure Web */
-    
+    --primary-color: #FF4E00;
+    /* Aerospace Orange */
+    --secondary-color: #6B9E83;
+    /* Cambridge Blue */
+    --accent-color: #FFC280;
+    /* Fawn */
+    --text-color: #1D1C1B;
+    /* Eerie Black */
+    --text-light: #555;
+    /* Cinza para subtextos */
+    --background-color: #FFF9F3;
+    /* Sea Shell */
+    --card-bg: #FFFFFF;
+    /* Branco Puro */
+    --border-color: #D4E7E6;
+    /* Azure Web */
+
     /* Cores de Status (Mantidas, pois não foram especificadas) */
     --error-color: #d9534f;
     --success-color: #28a745;
-    
+
     /* Cores de UI */
-    --highlight-color: var(--accent-color); /* Fawn para botões pendentes */
-    --skeleton-bg: var(--border-color); /* Azure Web para skeletons */
+    --highlight-color: var(--accent-color);
+    /* Fawn para botões pendentes */
+    --skeleton-bg: var(--border-color);
+    /* Azure Web para skeletons */
 
     /* Tipografia */
     --font-family-base: 'Inter', sans-serif;
@@ -44,10 +54,14 @@ main {
     margin: 0 auto;
     width: 100%;
     flex: 1;
-    box-sizing: border-box; /* Garante que o padding não estoure a largura */
+    box-sizing: border-box;
+    /* Garante que o padding não estoure a largura */
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
     font-family: var(--font-family-display);
     color: var(--text-color);
 }
@@ -65,7 +79,7 @@ header {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header-title {
@@ -89,7 +103,8 @@ header {
 header nav {
     display: flex;
     gap: 0.5rem;
-    align-items: center; /* Centraliza verticalmente */
+    align-items: center;
+    /* Centraliza verticalmente */
 }
 
 header nav a {
@@ -103,7 +118,8 @@ header nav a {
     text-decoration: none;
     font-weight: bold;
     transition: all 0.2s ease;
-    white-space: nowrap; /* Evita que o texto do link quebre */
+    white-space: nowrap;
+    /* Evita que o texto do link quebre */
 }
 
 header nav a:hover {
@@ -121,11 +137,14 @@ header nav a.logout-btn {
     background-color: var(--text-color);
     color: white;
     font-weight: bold;
-    margin-left: 1rem; /* Adiciona um espaço */
+    margin-left: 1rem;
+    /* Adiciona um espaço */
 }
+
 header nav a.logout-btn:hover {
     background-color: var(--error-color);
 }
+
 /* --- Fim do Botão de Logout --- */
 
 
@@ -184,54 +203,103 @@ button:hover:not(:disabled) {
     gap: 1rem;
 }
 
-.os-card h3 { margin: 0; }
-.os-card p { margin: 5px 0 0; color: var(--text-light); }
-.os-card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.os-card h3 {
+    margin: 0;
+}
 
-.view-details-btn, .view-agenda-btn, .edit-os-btn { 
-    background-color: var(--secondary-color); 
+.os-card p {
+    margin: 5px 0 0;
+    color: var(--text-light);
+}
+
+.os-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.view-details-btn,
+.view-agenda-btn,
+.edit-os-btn {
+    background-color: var(--secondary-color);
 }
 
 /* --- Tela de Detalhes da OS --- */
-.details-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 1.5rem; 
-    gap: 1rem; 
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
     flex-wrap: wrap;
 }
-#back-to-dashboard-btn, #back-to-ativos-panel-btn, #back-to-crm-panel-btn { 
-    margin-bottom: 0; 
-    background-color: var(--secondary-color); 
+
+#back-to-dashboard-btn,
+#back-to-ativos-panel-btn,
+#back-to-crm-panel-btn {
+    margin-bottom: 0;
+    background-color: var(--secondary-color);
 }
 
 /* --- Forms --- */
-input[type="datetime-local"], 
-input[type="date"], 
-input[type="text"], 
-select { 
-    width: 100%; 
-    padding: 10px; 
-    border: 1px solid var(--border-color); 
-    border-radius: 5px; 
-    font-size: 1rem; 
+input[type="datetime-local"],
+input[type="date"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
     font-family: var(--font-family-base);
-    box-sizing: border-box; 
+    box-sizing: border-box;
     background-color: #fff;
 }
-input[type="text"]:focus, select:focus {
+
+input[type="text"]:focus,
+select:focus {
     border-color: var(--primary-color);
     outline: none;
     box-shadow: 0 0 0 2px rgba(255, 78, 0, 0.2);
 }
 
-.date-time-inputs { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
-.date-time-inputs label { flex: 1; min-width: 200px; }
-#ativo-suggestions { border: 1px solid var(--border-color); border-top: none; max-height: 150px; overflow-y: auto; background-color: white; position: relative; width: 100%; box-sizing: border-box; }
-#ativo-suggestions div { padding: 10px; cursor: pointer; }
-#ativo-suggestions div:hover { background-color: #f0f0f0; }
-.error-message { color: var(--error-color); margin-top: 10px; font-weight: bold; }
+.date-time-inputs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.date-time-inputs label {
+    flex: 1;
+    min-width: 200px;
+}
+
+#ativo-suggestions {
+    border: 1px solid var(--border-color);
+    border-top: none;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: white;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#ativo-suggestions div {
+    padding: 10px;
+    cursor: pointer;
+}
+
+#ativo-suggestions div:hover {
+    background-color: #f0f0f0;
+}
+
+.error-message {
+    color: var(--error-color);
+    margin-top: 10px;
+    font-weight: bold;
+}
 
 /* --- Ativos Alocados Agrupados --- */
 .classification-group-title {
@@ -242,18 +310,54 @@ input[type="text"]:focus, select:focus {
     padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--primary-color);
 }
-#alocados-list > .classification-group-title:first-child {
+
+#alocados-list>.classification-group-title:first-child {
     margin-top: 0;
 }
-.alocado-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 1rem; border-bottom: 1px solid var(--border-color); }
-.alocado-item.last-in-group { border-bottom: none; }
-.alocado-item .info .ativo-name { font-weight: bold; }
-.alocado-item .info .periodo { font-size: 0.9em; color: var(--text-light); }
-.alocado-item-actions { display: flex; gap: 0.5rem; }
-.alocado-item-actions button { padding: 5px 8px; font-size: 0.8rem; }
-.remove-btn { background-color: var(--error-color); }
 
-.billing-type-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; font-weight: bold;}
+.alocado-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.alocado-item.last-in-group {
+    border-bottom: none;
+}
+
+.alocado-item .info .ativo-name {
+    font-weight: bold;
+}
+
+.alocado-item .info .periodo {
+    font-size: 0.9em;
+    color: var(--text-light);
+}
+
+.alocado-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.alocado-item-actions button {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+}
+
+.remove-btn {
+    background-color: var(--error-color);
+}
+
+.billing-type-selector {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-weight: bold;
+}
 
 /* --- Resumo Financeiro --- */
 #financial-details-grid {
@@ -262,220 +366,356 @@ input[type="text"]:focus, select:focus {
     gap: 1rem;
     align-items: center;
 }
+
 .financial-item {
     padding: 1rem;
     background-color: var(--background-color);
     border-radius: 5px;
 }
+
 .financial-item strong {
     display: block;
     color: var(--text-light);
     margin-bottom: 8px;
 }
+
 .financial-item span {
     font-size: 1.5rem;
     font-weight: bold;
     font-family: var(--font-family-display);
 }
+
 #os-final-total-value {
     color: var(--success-color);
 }
 
 /* --- Rodapé de Ações --- */
-.actions-footer { 
-    display: flex; 
-    justify-content: flex-end; 
-    align-items: center; 
-    gap: 1rem; 
-    margin-top: 2rem; 
-    padding-top: 1.5rem; 
-    border-top: 1px solid var(--border-color); 
-    text-align: right; 
+.actions-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    text-align: right;
     flex-wrap: wrap;
 }
-#save-os-btn.pending-changes { 
-    background-color: var(--highlight-color); 
-    color: var(--text-color); 
-    font-weight: bold; 
+
+#save-os-btn.pending-changes {
+    background-color: var(--highlight-color);
+    color: var(--text-color);
+    font-weight: bold;
 }
-#save-status { text-align: right; margin-right: auto; }
-#save-status.success { color: var(--success-color); }
-#save-status.error { color: var(--error-color); }
+
+#save-status {
+    text-align: right;
+    margin-right: auto;
+}
+
+#save-status.success {
+    color: var(--success-color);
+}
+
+#save-status.error {
+    color: var(--error-color);
+}
 
 /* --- Painel de Ativos / CRM --- */
-.filters-container { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-    gap: 1rem; 
-    margin-bottom: 1.5rem; 
+.filters-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
-.item-list-container { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
-    gap: 1.5rem; 
+
+.item-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
 }
-.ativo-card, .crm-card { 
-    border: 3px solid var(--border-color); 
-    transition: all 0.3s; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-    border-radius: 8px; 
-    padding: 1rem; 
-    background-color: var(--card-bg); 
-    cursor: pointer; 
+
+.ativo-card,
+.crm-card {
+    border: 3px solid var(--border-color);
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    cursor: pointer;
 }
-.ativo-card:hover, .crm-card:hover {
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+
+.ativo-card:hover,
+.crm-card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
 }
 
-.ativo-card-header, .crm-card-header { display: block; }
-.item-card-title { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.75rem; 
+.ativo-card-header,
+.crm-card-header {
+    display: block;
+}
+
+.item-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin-bottom: 0.5rem;
 }
+
 .item-card-title h3 {
     margin: 0;
 }
-.ativo-card-header p, .crm-card-header p { 
-    font-size: 0.9em; 
-    color: var(--text-light); 
+
+.ativo-card-header p,
+.crm-card-header p {
+    font-size: 0.9em;
+    color: var(--text-light);
     margin: 0.5rem 0 0 0;
 }
-.item-tag { 
-    font-size: 0.8rem; 
-    padding: 4px 8px; 
-    border-radius: 12px; 
-    color: white; 
+
+.item-tag {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: white;
     font-weight: bold;
 }
-.ativo-valores { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 0.5rem; 
-    margin-top: 0.75rem; 
+
+.ativo-valores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
-.valor-badge { 
-    font-size: 0.9rem; 
-    padding: 5px 10px; 
-    border-radius: 5px; 
+
+.valor-badge {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 5px;
     background-color: var(--background-color);
-    border: 1px solid var(--border-color); 
+    border: 1px solid var(--border-color);
 }
 
 /* --- Telas de Detalhes (Ativo/CRM) --- */
-.detail-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-    gap: 1rem; 
-    margin-top: 1rem; 
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
 }
-.detail-item { 
+
+.detail-item {
     background-color: var(--background-color);
-    border: 1px solid var(--border-color); 
-    padding: 10px 15px; 
-    border-radius: 5px; 
-    overflow-wrap: break-word; 
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    border-radius: 5px;
+    overflow-wrap: break-word;
 }
-.detail-item strong { 
-    display: block; 
-    color: var(--text-light); 
-    font-size: 0.9em; 
-    margin-bottom: 5px; 
+
+.detail-item strong {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.9em;
+    margin-bottom: 5px;
 }
 
 /* --- Calendário de Ativos --- */
-.schedule-container { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
-.calendar { text-align: center; }
-.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.calendar-header h4 { margin: 0; font-size: 1.2rem; }
-.calendar-header button { background-color: var(--secondary-color); padding: 5px 10px; }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.calendar-day, .calendar-day-name { padding: 10px; border-radius: 4px; }
-.calendar-day-name { font-weight: bold; }
-.calendar-day { background-color: #f9f9f9; color: #aaa; }
-.calendar-day.in-month { background-color: var(--card-bg); color: var(--text-color); }
-.calendar-day.allocated { 
-    background-color: var(--accent-color); 
-    color: var(--text-color); 
-    font-weight: bold; 
-    position: relative; 
+.schedule-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.calendar {
+    text-align: center;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.calendar-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.calendar-header button {
+    background-color: var(--secondary-color);
+    padding: 5px 10px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day,
+.calendar-day-name {
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.calendar-day-name {
+    font-weight: bold;
+}
+
+.calendar-day {
+    background-color: #f9f9f9;
+    color: #aaa;
+}
+
+.calendar-day.in-month {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+.calendar-day.allocated {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    font-weight: bold;
+    position: relative;
     cursor: pointer;
     border: 1px solid var(--primary-color);
 }
+
 .calendar-day.allocated:hover {
     opacity: 0.8;
 }
 
 /* --- Skeleton Loading --- */
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-.skeleton { 
-    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
-    background-color: var(--skeleton-bg); 
-    border-radius: 4px; 
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
 }
-.skeleton-text { height: 1.2em; margin-bottom: 0.5rem; }
-.skeleton-p { height: 1em; width: 75%; margin-top: 0.5rem; }
-.skeleton-button { width: 100px; height: 36px; }
-.os-card.skeleton .os-card-header div:first-child { flex: 1; }
-.ativo-card.skeleton, .crm-card.skeleton { 
-    height: 120px; 
-    border-color: var(--skeleton-bg); 
-    cursor: default; 
+
+.skeleton {
+    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: var(--skeleton-bg);
+    border-radius: 4px;
+}
+
+.skeleton-text {
+    height: 1.2em;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-p {
+    height: 1em;
+    width: 75%;
+    margin-top: 0.5rem;
+}
+
+.skeleton-button {
+    width: 100px;
+    height: 36px;
+}
+
+.os-card.skeleton .os-card-header div:first-child {
+    flex: 1;
+}
+
+.ativo-card.skeleton,
+.crm-card.skeleton {
+    height: 120px;
+    border-color: var(--skeleton-bg);
+    cursor: default;
 }
 
 /* --- Modals --- */
-.modal-overlay { 
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.5); 
-    z-index: 100; 
-    display: flex; 
-    justify-content: center; 
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
     align-items: center;
-    backdrop-filter: blur(4px); 
+    backdrop-filter: blur(4px);
 }
-.modal-content { 
-    background: white; 
-    padding: 2rem; 
-    border-radius: 8px; 
-    width: 90%; 
-    max-width: 500px; 
-    position: relative; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
-.modal-close-btn { 
-    position: absolute; 
-    top: 10px; right: 15px; 
-    background: none; 
-    border: none; 
-    font-size: 2rem; 
-    color: #333; 
-    cursor: pointer; 
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #333;
+    cursor: pointer;
 }
-.modal-body .form-group { margin-bottom: 1rem; }
-.modal-body .form-group:last-child { margin-bottom: 0; }
-.modal-body .booking-item { padding: 10px; border-bottom: 1px solid var(--border-color); }
-.modal-body .booking-item:last-child { border-bottom: none; }
-.modal-body .booking-item span { font-weight: bold; color: var(--primary-color); }
-#os-name-input, #os-modal-discount-input { 
-    width: 100%; 
-    padding: 10px; 
-    border: 1px solid var(--border-color); 
-    border-radius: 5px; 
-    font-size: 1rem; 
-    box-sizing: border-box; 
+
+.modal-body .form-group {
+    margin-bottom: 1rem;
 }
-.modal-footer { 
-    text-align: right; 
-    margin-top: 1.5rem; 
-    border-top: 1px solid var(--border-color); 
-    padding-top: 1rem; 
+
+.modal-body .form-group:last-child {
+    margin-bottom: 0;
 }
-.modal-footer button { margin-left: 0.5rem; }
-.modal-cancel-btn { background-color: var(--secondary-color); }
+
+.modal-body .booking-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body .booking-item:last-child {
+    border-bottom: none;
+}
+
+.modal-body .booking-item span {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+#os-name-input,
+#os-modal-discount-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.modal-footer {
+    text-align: right;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.modal-footer button {
+    margin-left: 0.5rem;
+}
+
+.modal-cancel-btn {
+    background-color: var(--secondary-color);
+}
 
 /* --- Footer --- */
 footer {
@@ -493,100 +733,257 @@ footer {
         flex-direction: column;
         gap: 1rem;
     }
+
     /* AJUSTE: Centraliza os links da navegação quando quebram a linha */
     header nav {
         justify-content: center;
-        flex-wrap: wrap; /* Garante que a quebra ocorra */
+        flex-wrap: wrap;
+        /* Garante que a quebra ocorra */
     }
+
     main {
         padding: 1rem;
     }
+
     .details-header {
         flex-direction: column;
         align-items: flex-start;
     }
-    .os-card-header, .actions-footer {
+
+    .os-card-header,
+    .actions-footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
+
     .actions-footer {
         align-items: stretch;
     }
+
     .actions-footer button {
         width: 100%;
     }
+
     #save-status {
         text-align: left;
         margin-bottom: 0.5rem;
     }
-    .calendar-day, .calendar-day-name {
+
+    .calendar-day,
+    .calendar-day-name {
         padding: 5px;
         font-size: 0.8rem;
     }
+
     .modal-content {
         padding: 1.5rem;
     }
 }
 
-/* NOVA MEDIA QUERY: Adicionada para telas de celular pequenas (abaixo de 480px) */
-@media (max-width: 480px) {
-    
-    /* Títulos e espaçamento principal */
-    h2 {
-        font-size: 1.5rem; /* Reduz o H2 */
-    }
-    main {
-        padding: 0.75rem; /* Reduz o padding principal */
-    }
-    .card {
-        padding: 1rem;
+/* --- Estilos para o Modal de Impressão --- */
+.document-previewA4 {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    /* Fonte limpa para o documento */
+    font-size: 11pt;
+    color: black;
+    line-height: 1.4;
+}
+
+/* --- CLASSE DE UTILIDADE DE IMPRESSÃO (ESTILO NOTA FISCAL) --- */
+.print-doc-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.print-doc-header h1 {
+    font-size: 20pt;
+    margin: 0;
+    color: #000;
+}
+
+.print-doc-header h2 {
+    font-size: 14pt;
+    margin: 0;
+    color: #555;
+}
+
+.print-section {
+    margin-bottom: 20px;
+    border: 1px solid #000;
+    padding: 10px;
+}
+
+.print-section h3 {
+    margin: -10px -10px 10px -10px;
+    background-color: #eee;
+    padding: 5px 10px;
+    font-size: 10pt;
+    border-bottom: 1px solid #000;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #000;
+}
+
+.print-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 10pt;
+}
+
+.print-field strong {
+    font-weight: bold;
+}
+
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin-bottom: 15px;
+}
+
+.print-table th {
+    border-bottom: 1px solid #000;
+    text-align: left;
+    padding: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 9pt;
+}
+
+.print-table td {
+    border-bottom: 1px solid #ccc;
+    padding: 5px;
+}
+
+.print-table tr:last-child td {
+    border-bottom: none;
+}
+
+.print-totals {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.print-totals table {
+    width: auto;
+    font-size: 11pt;
+}
+
+.print-totals td {
+    padding: 5px 10px;
+    text-align: right;
+}
+
+.print-totals tr.total-row {
+    font-weight: bold;
+    font-size: 12pt;
+    border-top: 2px solid #000;
+}
+
+
+/* --- ESTILOS DE IMPRESSÃO (NATIVO - Modificado) --- */
+/* --- ESTILOS DE IMPRESSÃO (NATIVO - Modificado) --- */
+@media print {
+
+    /* REMOVE CABEÇALHOS E RODAPÉS DO NAVEGADOR (Data, URL, Título da Página) */
+    @page {
+        margin: 0;
+        size: auto;
     }
 
-    /* Força o menu de navegação a empilhar verticalmente */
-    header nav {
-        flex-direction: column;
-        width: 100%;
-        gap: 0.25rem;
-    }
-    header nav a {
-        width: 100%;
-        text-align: center;
-        box-sizing: border-box; /* Garante que o padding seja incluído no width */
-    }
-    header nav a.logout-btn {
-        margin-left: 0; /* Remove a margem do logout */
+    /* Esconde TUDO por padrão */
+    body>* {
+        display: none !important;
     }
 
-    /* Correção Crítica: Calendário (detalhe-ativo.html) */
-    .calendar-day, .calendar-day-name {
-        padding: 3px 2px; /* Muito menor */
-        font-size: 0.7rem; /* Menor */
-    }
-    .calendar-day-name {
-        font-weight: normal; /* Tira o negrito para economizar espaço */
-    }
-    .calendar-header h4 {
-        font-size: 1.1rem;
-    }
-    
-    /* Correção: Inputs de Data/Hora (detalhe-os.html) */
-    .date-time-inputs {
-        flex-direction: column; /* Força empilhamento */
-        gap: 0.75rem;
-    }
-    .date-time-inputs label {
-        flex-basis: 100%; /* Ocupa 100% da largura */
-        min-width: 0;
+    /* Mantém o Modal visível (pois o conteúdo está nele), mas ajusta */
+    #print-modal {
+        display: block !important;
+        position: absolute !important;
+        /* Absolute para evitar conflitos de flex/grid */
+        top: 0 !important;
+        left: 0 !important;
+        background: white !important;
+        /* Garante fundo branco */
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        z-index: 9999 !important;
     }
 
-    /* Correção: Grids de detalhes (financeiro, crm, ativo) */
-    .detail-grid, #financial-details-grid {
-        grid-template-columns: 1fr; /* Força uma única coluna */
-    }
-
-    /* Correção: Modais */
     .modal-content {
-        padding: 1.5rem 1rem; /* Menos padding horizontal */
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: static !important;
+        height: auto !important;
+        /* Garante que cresça conforme conteúdo */
+    }
+
+    /* Esconde a UI do Modal (títulos, botões, coluna da esquerda) */
+    .modal-content>div:first-child,
+    /* Header do modal */
+    .modal-content>div:nth-child(2)>div:first-child,
+    /* Coluna Esquerda */
+    #print-modal-close-btn {
+        display: none !important;
+    }
+
+    /* Ajusta a área de preview para ser a ÚNICA coisa impressa */
+    .modal-content>div:nth-child(2),
+    /* Container flex */
+    .modal-content>div:nth-child(2)>div:nth-child(2) {
+        /* Coluna Direita */
+        display: block !important;
+        padding: 0 !important;
+        background: white !important;
+        /* Garante fundo branco */
+        overflow: visible !important;
+        width: 100% !important;
+        margin: 0 !important;
+        height: auto !important;
+    }
+
+    .document-previewA4 {
+        margin: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        min-height: auto !important;
+        /* Adiciona padding interno para compensar o margin:0 do @page */
+        padding: 20mm !important;
+        background-color: white !important;
+    }
+
+    /* Outros ajustes de impressão */
+    body,
+    html {
+        background-color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }

@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes da OS - Agoora Hub</title>
-    
-    <!-- Bibliotecas para Geração de PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Bibliotecas de PDF removidas em favor do CSS Print Nativo -->
 
     <!-- CSS Global -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <header>
         <div class="header-title">
-            <img src="https://static.wixstatic.com/media/8e154d_4a12ed9159714e48b78edd19819bb5a0~mv2.png/v1/fill/w_40,h_40,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo_Redondo.png" alt="Logo Agoora Hub">
+            <img src="https://static.wixstatic.com/media/8e154d_4a12ed9159714e48b78edd19819bb5a0~mv2.png/v1/fill/w_40,h_40,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo_Redondo.png"
+                alt="Logo Agoora Hub">
             <h1>Gerenciador - Agoora Hub</h1>
         </div>
         <nav>
@@ -47,9 +48,10 @@
             <div class="card">
                 <h3>Adicionar Novo Ativo</h3>
                 <div id="add-ativo-form">
-                    <input type="text" id="ativo-search-input" placeholder="Buscar Ativo por nome..." autocomplete="off">
+                    <input type="text" id="ativo-search-input" placeholder="Buscar Ativo por nome..."
+                        autocomplete="off">
                     <div id="ativo-suggestions"></div>
-                    
+
                     <div class="billing-type-selector">
                         <strong>Faturar por:</strong>
                         <label><input type="radio" name="billing-type" value="hora" checked> Hora</label>
@@ -103,7 +105,7 @@
             </div>
         </div>
     </main>
-    
+
     <!-- MODAL PARA CRIAR/EDITAR OS (Usado para editar) -->
     <div id="os-modal" class="modal-overlay is-hidden">
         <div class="modal-content">
@@ -126,7 +128,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- MODAL PARA EDITAR HISTÓRICO -->
     <div id="historico-edit-modal" class="modal-overlay is-hidden">
         <div class="modal-content">
@@ -156,6 +158,79 @@
         </div>
     </div>
 
+    <!-- MODAL DE PRÉ-IMPRESSÃO (Novo) -->
+    <div id="print-modal" class="modal-overlay is-hidden"
+        style="align-items: flex-start; padding-top: 50px; overflow-y: auto;">
+        <div class="modal-content"
+            style="max-width: 1000px; width: 95%; display: flex; flex-direction: column; gap: 20px; height: 85vh;">
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">Configurar Impressão</h3>
+                <button id="print-modal-close-btn" class="modal-close-btn" style="position: static;">&times;</button>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex: 1; overflow: hidden;">
+                <!-- Coluna da Esquerda: Opções -->
+                <div
+                    style="width: 300px; min-width: 250px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding-right: 10px;">
+                    <div class="card" style="margin: 0; padding: 1.5rem;">
+                        <h4 style="margin-top: 0; font-size: 1rem; margin-bottom: 1rem;">Personalizar</h4>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="print-check-company" checked>
+                                <span>Dados da Empresa</span>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="print-check-client" checked>
+                                <span>Dados do Cliente</span>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="print-check-values" checked>
+                                <span>Valores Financeiros</span>
+                            </label>
+
+                            <hr style="width: 100%; border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+                            <button id="do-print-btn"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path
+                                        d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                                    <path d="M6 14h12v8H6z" />
+                                </svg>
+                                Imprimir / Salvar PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background-color: #f0f4f8; padding: 15px; border-radius: 8px; font-size: 0.85rem; color: #555; line-height: 1.5;">
+                        <strong>Dica:</strong> Na janela de impressão que abrirá:
+                        <ul style="padding-left: 20px; margin: 5px 0;">
+                            <li>Escolha "Salvar como PDF"</li>
+                            <li>Defina "Margens" como "Nenhuma" ou "Mínima" para melhor resultado</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Coluna da Direita: Preview (Paper View) -->
+                <div
+                    style="flex: 1; background-color: #525659; padding: 30px; border-radius: 8px; overflow-y: auto; display: flex; justify-content: center;">
+
+                    <!-- A Folha A4 simulada -->
+                    <div id="print-preview-area" class="document-previewA4">
+                        <!-- O conteúdo será injetado aqui via JS -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <footer>
         <p id="system-version">v3.0.0 (MPA)</p>
@@ -165,4 +240,5 @@
     <script src="common.js"></script>
     <script src="detalhe-os.js"></script>
 </body>
+
 </html>
